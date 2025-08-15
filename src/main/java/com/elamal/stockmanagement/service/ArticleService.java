@@ -1,6 +1,5 @@
 package com.elamal.stockmanagement.service;
 
-
 import com.elamal.stockmanagement.dto.ArticleDTO;
 import com.elamal.stockmanagement.dto.PagedResponseDTO;
 import com.elamal.stockmanagement.dto.SearchCriteriaDTO;
@@ -13,7 +12,6 @@ import com.elamal.stockmanagement.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,14 +30,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional
 public class ArticleService {
-    @Autowired
-    private  ArticleRepository articleRepository;
-    @Autowired
-    private  FournisseurRepository fournisseurRepository;
-    @Autowired
-    private  StockRepository stockRepository;
-    @Autowired
-    private  ModelMapper modelMapper;
+
+    // FIXED: Use consistent dependency injection (final fields with @RequiredArgsConstructor)
+    private final ArticleRepository articleRepository;
+    private final FournisseurRepository fournisseurRepository;
+    private final StockRepository stockRepository;
+    private final ModelMapper modelMapper;
 
     // ===============================
     // OPÉRATIONS CRUD DE BASE
@@ -49,83 +45,122 @@ public class ArticleService {
      * Créer un nouvel article
      */
     public ArticleDTO createArticle(ArticleDTO articleDTO) {
+        try {
+            log.info("Création d'un nouvel article avec le code: {}", articleDTO.getCode());
 
-        // Validation métier
-        validateArticleForCreation(articleDTO);
+            // Validation métier
+            validateArticleForCreation(articleDTO);
 
-        // Conversion DTO -> Entity
-        Article article = modelMapper.map(articleDTO, Article.class);
+            // FIXED: Manual mapping instead of ModelMapper to avoid field mapping issues
+            Article article = new Article();
+            article.setCode(articleDTO.getCode());
+            article.setDesignation(articleDTO.getDesignation());
+            article.setDescription(articleDTO.getDescription());
+            article.setCategorie(articleDTO.getCategorie());
+            article.setUnite(articleDTO.getUnite());
+            article.setPrixUnitaire(articleDTO.getPrixUnitaire());
+            article.setStockMin(articleDTO.getStockMin());
+            article.setStockMax(articleDTO.getStockMax());
+            article.setActif(articleDTO.getActif() != null ? articleDTO.getActif() : true);
 
-        // Gestion du fournisseur principal
-        if (articleDTO.getFournisseurPrincipalId() != null) {
-            Fournisseur fournisseur = fournisseurRepository.findById(articleDTO.getFournisseurPrincipalId())
-                    .orElseThrow(() -> new RuntimeException("Fournisseur introuvable avec l'ID: " + articleDTO.getFournisseurPrincipalId()));
-            article.setFournisseurPrincipal(fournisseur);
+            // Gestion du fournisseur principal
+            if (articleDTO.getFournisseurPrincipalId() != null) {
+                Fournisseur fournisseur = fournisseurRepository.findById(articleDTO.getFournisseurPrincipalId())
+                        .orElseThrow(() -> new RuntimeException("Fournisseur introuvable avec l'ID: " + articleDTO.getFournisseurPrincipalId()));
+                article.setFournisseurPrincipal(fournisseur);
+            }
+
+            // Sauvegarde de l'article
+            Article savedArticle = articleRepository.save(article);
+            log.info("Article sauvegardé avec succès: ID={}, Code={}", savedArticle.getId(), savedArticle.getCode());
+
+            // Création du stock initial (quantité 0)
+            createInitialStock(savedArticle);
+
+            return convertToDTO(savedArticle);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la création de l'article: {}", e.getMessage(), e);
+            throw e; // Rethrow to get the actual error in the controller
         }
-
-        // Sauvegarde de l'article
-        Article savedArticle = articleRepository.save(article);
-
-        // Création du stock initial (quantité 0)
-        createInitialStock(savedArticle);
-
-
-        return convertToDTO(savedArticle);
     }
 
     /**
      * Mettre à jour un article existant
      */
     public ArticleDTO updateArticle(Long id, ArticleDTO articleDTO) {
+        try {
+            log.info("Mise à jour de l'article ID: {}", id);
 
-        Article existingArticle = articleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
+            Article existingArticle = articleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
 
-        // Validation métier pour mise à jour
-        validateArticleForUpdate(id, articleDTO);
+            // Validation métier pour mise à jour
+            validateArticleForUpdate(id, articleDTO);
 
-        // Mise à jour des champs
-        updateArticleFields(existingArticle, articleDTO);
+            // Mise à jour des champs
+            updateArticleFields(existingArticle, articleDTO);
 
-        // Gestion du changement de fournisseur principal
-        updateFournisseurPrincipal(existingArticle, articleDTO.getFournisseurPrincipalId());
+            // Gestion du changement de fournisseur principal
+            updateFournisseurPrincipal(existingArticle, articleDTO.getFournisseurPrincipalId());
 
-        Article updatedArticle = articleRepository.save(existingArticle);
+            Article updatedArticle = articleRepository.save(existingArticle);
+            log.info("Article mis à jour avec succès: ID={}", updatedArticle.getId());
 
+            return convertToDTO(updatedArticle);
 
-        return convertToDTO(updatedArticle);
+        } catch (Exception e) {
+            log.error("Erreur lors de la mise à jour de l'article ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
      * Supprimer un article (suppression logique)
      */
     public void deleteArticle(Long id) {
+        try {
+            log.info("Suppression de l'article ID: {}", id);
 
-        Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
+            Article article = articleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
 
-        // Vérifications avant suppression
-        validateArticleForDeletion(article);
+            // Vérifications avant suppression
+            validateArticleForDeletion(article);
 
-        // Suppression logique (désactivation)
-        article.setActif(false);
-        articleRepository.save(article);
+            // Suppression logique (désactivation)
+            article.setActif(false);
+            articleRepository.save(article);
 
+            log.info("Article supprimé avec succès: ID={}", id);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la suppression de l'article ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
      * Réactiver un article
      */
     public ArticleDTO reactivateArticle(Long id) {
+        try {
+            log.info("Réactivation de l'article ID: {}", id);
 
-        Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
+            Article article = articleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
 
-        article.setActif(true);
-        Article reactivatedArticle = articleRepository.save(article);
+            article.setActif(true);
+            Article reactivatedArticle = articleRepository.save(article);
 
+            log.info("Article réactivé avec succès: ID={}", id);
 
-        return convertToDTO(reactivatedArticle);
+            return convertToDTO(reactivatedArticle);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la réactivation de l'article ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     // ===============================
@@ -137,6 +172,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public ArticleDTO getArticleById(Long id) {
+        log.debug("Récupération de l'article ID: {}", id);
 
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Article introuvable avec l'ID: " + id));
@@ -149,6 +185,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public ArticleDTO getArticleByCode(String code) {
+        log.debug("Récupération de l'article avec le code: {}", code);
 
         Article article = articleRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Article introuvable avec le code: " + code));
@@ -161,6 +198,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getAllActiveArticles() {
+        log.debug("Récupération de tous les articles actifs");
 
         List<Article> articles = articleRepository.findByActifTrue();
         return articles.stream()
@@ -173,6 +211,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public PagedResponseDTO<ArticleDTO> getAllArticles(int page, int size, String sortBy, String sortDirection) {
+        log.debug("Récupération des articles avec pagination - Page: {}, Size: {}", page, size);
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -197,6 +236,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public PagedResponseDTO<ArticleDTO> searchArticles(SearchCriteriaDTO criteria) {
+        log.debug("Recherche d'articles avec critères");
 
         Sort sort = Sort.by(Sort.Direction.fromString(criteria.getSortDirection()), criteria.getSortBy());
         Pageable pageable = PageRequest.of(criteria.getPage(), criteria.getSize(), sort);
@@ -227,6 +267,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public PagedResponseDTO<ArticleDTO> searchArticlesByText(String searchTerm, int page, int size) {
+        log.debug("Recherche textuelle d'articles avec le terme: {}", searchTerm);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("designation"));
         Page<Article> articlePage = articleRepository.searchArticles(searchTerm, pageable);
@@ -253,6 +294,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesWithCriticalStock() {
+        log.debug("Récupération des articles avec stock critique");
 
         List<Article> articles = articleRepository.findArticlesWithCriticalStock();
         return articles.stream()
@@ -265,6 +307,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesWithLowStock() {
+        log.debug("Récupération des articles avec stock faible");
 
         List<Article> articles = articleRepository.findArticlesWithLowStock();
         return articles.stream()
@@ -277,6 +320,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesWithoutStock() {
+        log.debug("Récupération des articles sans stock");
 
         List<Article> articles = articleRepository.findArticlesWithoutStock();
         return articles.stream()
@@ -289,6 +333,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesWithExcessiveStock() {
+        log.debug("Récupération des articles avec stock excessif");
 
         List<Article> articles = articleRepository.findArticlesWithExcessiveStock();
         return articles.stream()
@@ -305,6 +350,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getTopArticlesByStockValue(int limit) {
+        log.debug("Récupération du top {} articles par valeur de stock", limit);
 
         Pageable pageable = PageRequest.of(0, limit);
         List<Article> articles = articleRepository.findTopArticlesByStockValue(pageable);
@@ -318,6 +364,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<Object[]> getStockStatsByCategory() {
+        log.debug("Récupération des statistiques par catégorie");
 
         return articleRepository.findStockStatsByCategory();
     }
@@ -327,6 +374,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<Object[]> getMostConsumedArticles(int days, int limit) {
+        log.debug("Récupération des articles les plus consommés sur {} jours", days);
 
         Pageable pageable = PageRequest.of(0, limit);
         return articleRepository.findMostConsumedArticles(days, pageable);
@@ -337,6 +385,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public Long countArticlesByStatus(Boolean actif) {
+        log.debug("Comptage des articles par statut: {}", actif);
 
         return articleRepository.countByActif(actif);
     }
@@ -346,6 +395,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<Object[]> countArticlesByCategory() {
+        log.debug("Comptage des articles par catégorie");
 
         return articleRepository.countByCategory();
     }
@@ -359,6 +409,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesByCategory(String categorie) {
+        log.debug("Récupération des articles de la catégorie: {}", categorie);
 
         List<Article> articles = articleRepository.findByCategorie(categorie);
         return articles.stream()
@@ -371,6 +422,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<String> getAllCategories() {
+        log.debug("Récupération de toutes les catégories");
 
         return articleRepository.findAll().stream()
                 .map(Article::getCategorie)
@@ -389,6 +441,7 @@ public class ArticleService {
      */
     @Transactional(readOnly = true)
     public List<ArticleDTO> getArticlesByFournisseur(Long fournisseurId) {
+        log.debug("Récupération des articles du fournisseur ID: {}", fournisseurId);
 
         List<Article> articles = articleRepository.findByFournisseurPrincipalId(fournisseurId);
         return articles.stream()
@@ -421,6 +474,8 @@ public class ArticleService {
     // ===============================
 
     private void validateArticleForCreation(ArticleDTO articleDTO) {
+        log.debug("Validation de l'article pour création: {}", articleDTO.getCode());
+
         if (articleDTO.getCode() == null || articleDTO.getCode().trim().isEmpty()) {
             throw new IllegalArgumentException("Le code article est obligatoire");
         }
@@ -452,6 +507,8 @@ public class ArticleService {
     }
 
     private void validateArticleForUpdate(Long id, ArticleDTO articleDTO) {
+        log.debug("Validation de l'article pour mise à jour: ID={}", id);
+
         if (articleDTO.getCode() != null && existsByCodeAndIdNot(articleDTO.getCode(), id)) {
             throw new IllegalArgumentException("Un autre article avec ce code existe déjà: " + articleDTO.getCode());
         }
@@ -479,6 +536,8 @@ public class ArticleService {
     }
 
     private void validateArticleForDeletion(Article article) {
+        log.debug("Validation de l'article pour suppression: {}", article.getCode());
+
         // Vérifier s'il y a du stock
         Optional<Stock> stock = stockRepository.findByArticleId(article.getId());
         if (stock.isPresent() && stock.get().getQuantiteActuelle() > 0) {
@@ -534,39 +593,88 @@ public class ArticleService {
         }
     }
 
+    // FIXED: Enhanced createInitialStock with better error handling
     private void createInitialStock(Article article) {
-        Stock stock = new Stock();
-        stock.setArticle(article);
-        stock.setQuantiteActuelle(0);
-        stock.setQuantiteReservee(0);
-        stock.setQuantiteDisponible(0);
+        try {
+            log.debug("Création du stock initial pour l'article: {}", article.getCode());
 
-        if (article.getPrixUnitaire() != null) {
-            stock.setPrixMoyenPondere(article.getPrixUnitaire());
-            stock.setValeurStock(BigDecimal.ZERO);
+            // Vérifier si le stock existe déjà
+            Optional<Stock> existingStock = stockRepository.findByArticleId(article.getId());
+            if (existingStock.isPresent()) {
+                log.warn("Stock déjà existant pour l'article: {}", article.getCode());
+                return;
+            }
+
+            Stock stock = new Stock();
+            stock.setArticle(article);
+            stock.setQuantiteActuelle(0);
+            stock.setQuantiteReservee(0);
+            stock.setQuantiteDisponible(0);
+
+            if (article.getPrixUnitaire() != null) {
+                stock.setPrixMoyenPondere(article.getPrixUnitaire());
+                stock.setValeurStock(BigDecimal.ZERO);
+            } else {
+                stock.setPrixMoyenPondere(BigDecimal.ZERO);
+                stock.setValeurStock(BigDecimal.ZERO);
+            }
+
+            stockRepository.save(stock);
+            log.debug("Stock initial créé avec succès pour l'article: {}", article.getCode());
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la création du stock initial pour l'article {}: {}",
+                    article.getCode(), e.getMessage(), e);
+            throw new RuntimeException("Erreur lors de la création du stock initial", e);
         }
-
-        stockRepository.save(stock);
-        log.debug("Stock initial créé pour l'article: {}", article.getCode());
     }
 
+    // FIXED: Enhanced convertToDTO with better null handling
     private ArticleDTO convertToDTO(Article article) {
-        ArticleDTO dto = modelMapper.map(article, ArticleDTO.class);
+        try {
+            log.trace("Conversion de l'article vers DTO: {}", article.getCode());
 
-        // Ajouter les informations du fournisseur principal
-        if (article.getFournisseurPrincipal() != null) {
-            dto.setFournisseurPrincipalId(article.getFournisseurPrincipal().getId());
-            dto.setFournisseurPrincipalNom(article.getFournisseurPrincipal().getNom());
+            ArticleDTO dto = new ArticleDTO();
+
+            // Mapping manuel pour éviter les problèmes de ModelMapper
+            dto.setId(article.getId());
+            dto.setCode(article.getCode());
+            dto.setDesignation(article.getDesignation());
+            dto.setDescription(article.getDescription());
+            dto.setCategorie(article.getCategorie());
+            dto.setUnite(article.getUnite());
+            dto.setPrixUnitaire(article.getPrixUnitaire());
+            dto.setStockMin(article.getStockMin());
+            dto.setStockMax(article.getStockMax());
+            dto.setActif(article.getActif());
+            dto.setDateCreation(article.getDateCreation());
+            dto.setDateModification(article.getDateModification());
+
+            // Ajouter les informations du fournisseur principal
+            if (article.getFournisseurPrincipal() != null) {
+                dto.setFournisseurPrincipalId(article.getFournisseurPrincipal().getId());
+                dto.setFournisseurPrincipalNom(article.getFournisseurPrincipal().getNom());
+            }
+
+            // Ajouter les informations du stock (avec gestion des proxies lazy)
+            if (article.getStock() != null) {
+                try {
+                    dto.setQuantiteActuelle(article.getStock().getQuantiteActuelle());
+                    dto.setValeurStock(article.getStock().getValeurStock());
+                    dto.setDerniereEntree(article.getStock().getDerniereEntree());
+                    dto.setDerniereSortie(article.getStock().getDerniereSortie());
+                } catch (Exception e) {
+                    // En cas d'erreur avec le lazy loading du stock, continuer sans les infos de stock
+                    log.warn("Impossible de charger les informations de stock pour l'article {}: {}",
+                            article.getCode(), e.getMessage());
+                }
+            }
+
+            return dto;
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la conversion de l'article vers DTO: {}", e.getMessage(), e);
+            throw new RuntimeException("Erreur lors de la conversion de l'article", e);
         }
-
-        // Ajouter les informations du stock
-        if (article.getStock() != null) {
-            dto.setQuantiteActuelle(article.getStock().getQuantiteActuelle());
-            dto.setValeurStock(article.getStock().getValeurStock());
-            dto.setDerniereEntree(article.getStock().getDerniereEntree());
-            dto.setDerniereSortie(article.getStock().getDerniereSortie());
-        }
-
-        return dto;
     }
 }
