@@ -367,13 +367,12 @@
                 Long quantiteConsommee = ((Number) data[1]).longValue();
 
                 ChartDataDTO chartData = new ChartDataDTO();
-                chartData.setLabel(article.getDesignation());
                 chartData.setValue(quantiteConsommee);
                 chartData.setColor(generateRandomColor());
 
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("articleId", article.getId());
-                metadata.put("articleCode", article.getCode());
+                metadata.put("articleNom", article.getNom());
                 metadata.put("unite", article.getUnite());
                 chartData.setMetadata(metadata);
 
@@ -390,8 +389,7 @@
                 Article article = stock.getArticle();
                 AlerteStockDTO alerte = new AlerteStockDTO(
                         article.getId(),
-                        article.getCode(),
-                        article.getDesignation(),
+                        article.getNom(),
                         "CRITIQUE",
                         stock.getQuantiteActuelle(),
                         article.getStockMin()
@@ -405,8 +403,7 @@
                 Article article = stock.getArticle();
                 AlerteStockDTO alerte = new AlerteStockDTO(
                         article.getId(),
-                        article.getCode(),
-                        article.getDesignation(),
+                        article.getNom(),
                         "FAIBLE",
                         stock.getQuantiteActuelle(),
                         article.getStockMin()
@@ -420,8 +417,7 @@
                 Article article = stock.getArticle();
                 AlerteStockDTO alerte = new AlerteStockDTO();
                 alerte.setArticleId(article.getId());
-                alerte.setArticleCode(article.getCode());
-                alerte.setArticleDesignation(article.getDesignation());
+                alerte.setArticleCode(article.getNom());
                 alerte.setTypeAlerte("EXCESSIF");
                 alerte.setQuantiteActuelle(stock.getQuantiteActuelle());
                 alerte.setStockMax(article.getStockMax());
@@ -452,8 +448,7 @@
             for (StockMovement movement : recentMovements) {
                 String type = movement.getTypeMouvement().isEntree() ? "ENTREE" : "SORTIE";
                 String description = String.format("%s - %s: %d %s",
-                        movement.getArticle().getCode(),
-                        movement.getArticle().getDesignation(),
+                        movement.getArticle().getNom(),
                         movement.getQuantite(),
                         movement.getArticle().getUnite() != null ? movement.getArticle().getUnite() : "unités"
                 );

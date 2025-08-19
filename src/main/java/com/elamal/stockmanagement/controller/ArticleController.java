@@ -38,7 +38,7 @@ public class ArticleController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Article créé avec succès"),
             @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "409", description = "Article avec ce code existe déjà")
+            @ApiResponse(responseCode = "409", description = "Article avec ce Nom existe déjà")
     })
     public ResponseEntity<ApiResponseDTO<ArticleDTO>> createArticle(
             @Valid @RequestBody ArticleDTO articleDTO) {
@@ -94,16 +94,16 @@ public class ArticleController {
     }
 
     /**
-     * Récupérer un article par code
+     * Récupérer un article par Nom
      */
-    @GetMapping("/code/{code}")
-    @Operation(summary = "Récupérer un article par code", description = "Récupérer un article par son code unique")
-    public ResponseEntity<ApiResponseDTO<ArticleDTO>> getArticleByCode(
-            @Parameter(description = "Code de l'article") @PathVariable String code) {
+    @GetMapping("/Nom/{Nom}")
+    @Operation(summary = "Récupérer un article par Nom", description = "Récupérer un article par son Nom unique")
+    public ResponseEntity<ApiResponseDTO<ArticleDTO>> getArticleByNom(
+            @Parameter(description = "Nom de l'article") @PathVariable String Nom) {
 
 
         try {
-            ArticleDTO article = articleService.getArticleByCode(code);
+            ArticleDTO article = articleService.getArticleByNom(Nom);
 
             ApiResponseDTO<ArticleDTO> response = ApiResponseDTO.success(article);
             return ResponseEntity.ok(response);
@@ -570,16 +570,16 @@ public class ArticleController {
     // ===============================
 
     /**
-     * Vérifier l'existence d'un code article
+     * Vérifier l'existence d'un Nom article
      */
-    @GetMapping("/exists/code/{code}")
-    @Operation(summary = "Vérifier l'existence d'un code", description = "Vérifier si un code article existe")
-    public ResponseEntity<ApiResponseDTO<Boolean>> checkCodeExists(
-            @Parameter(description = "Code de l'article") @PathVariable String code) {
+    @GetMapping("/exists/Nom/{Nom}")
+    @Operation(summary = "Vérifier l'existence d'un Nom", description = "Vérifier si un Nom article existe")
+    public ResponseEntity<ApiResponseDTO<Boolean>> checkNomExists(
+            @Parameter(description = "Nom de l'article") @PathVariable String Nom) {
 
 
         try {
-            Boolean exists = articleService.existsByCode(code);
+            Boolean exists = articleService.existsByNom(Nom);
 
             ApiResponseDTO<Boolean> response = ApiResponseDTO.success(exists);
             return ResponseEntity.ok(response);
@@ -587,7 +587,7 @@ public class ArticleController {
         } catch (Exception e) {
 
             ApiResponseDTO<Boolean> response = ApiResponseDTO.error(
-                    "Erreur lors de la vérification du code"
+                    "Erreur lors de la vérification du Nom"
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }

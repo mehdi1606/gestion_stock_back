@@ -84,7 +84,7 @@ public class StockMovementService {
         stockRepository.save(stock);
 
         log.info("Entrée de stock effectuée avec succès: ID={}, Article={}, Quantité={}",
-                savedMovement.getId(), article.getCode(), entreeRequest.getQuantite());
+                savedMovement.getId(), article.getNom(), entreeRequest.getQuantite());
 
         return convertToDTO(savedMovement);
     }
@@ -140,7 +140,7 @@ public class StockMovementService {
         stockRepository.save(stock);
 
         log.info("Sortie de stock effectuée avec succès: ID={}, Article={}, Quantité={}",
-                savedMovement.getId(), article.getCode(), sortieRequest.getQuantite());
+                savedMovement.getId(), article.getNom(), sortieRequest.getQuantite());
 
         return convertToDTO(savedMovement);
     }
@@ -308,7 +308,7 @@ public class StockMovementService {
         stock.setQuantiteDisponible(stock.getQuantiteActuelle() - quantiteReservee);
 
         log.debug("Stock mis à jour pour entrée - Article: {}, Nouvelle quantité: {}, Nouveau PMP: {}",
-                stock.getArticle().getCode(), stock.getQuantiteActuelle(), nouveauPMP);
+                stock.getArticle().getNom(), stock.getQuantiteActuelle(), nouveauPMP);
     }
 
     private void updateStockForSortie(Stock stock, Integer quantite) {
@@ -329,7 +329,7 @@ public class StockMovementService {
         stock.setQuantiteDisponible(stock.getQuantiteActuelle() - quantiteReservee);
 
         log.debug("Stock mis à jour pour sortie - Article: {}, Nouvelle quantité: {}",
-                stock.getArticle().getCode(), stock.getQuantiteActuelle());
+                stock.getArticle().getNom(), stock.getQuantiteActuelle());
     }
 
     // ===============================
@@ -356,7 +356,7 @@ public class StockMovementService {
             newStock.setValeurStock(BigDecimal.ZERO);
 
             Stock savedStock = stockRepository.save(newStock);
-            log.info("Nouveau stock créé pour l'article: {}", article.getCode());
+            log.info("Nouveau stock créé pour l'article: {}", article.getNom());
 
             return savedStock;
         }
@@ -385,8 +385,7 @@ public class StockMovementService {
 
         // Enrichissement avec les informations de l'article
         if (movement.getArticle() != null) {
-            dto.setArticleCode(movement.getArticle().getCode());
-            dto.setArticleDesignation(movement.getArticle().getDesignation());
+            dto.setArticleNom(movement.getArticle().getNom());
             dto.setArticleUnite(movement.getArticle().getUnite());
             dto.setArticleCategorie(movement.getArticle().getCategorie());
         }
@@ -395,7 +394,7 @@ public class StockMovementService {
         if (movement.getFournisseur() != null) {
             dto.setFournisseurId(movement.getFournisseur().getId());
             dto.setFournisseurNom(movement.getFournisseur().getNom());
-            dto.setFournisseurCode(movement.getFournisseur().getCode());
+            dto.setFournisseurNom(movement.getFournisseur().getNom());
         }
 
         // Calcul de la valeur totale si manquante

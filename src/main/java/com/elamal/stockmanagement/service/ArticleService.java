@@ -46,15 +46,14 @@ public class ArticleService {
      */
     public ArticleDTO createArticle(ArticleDTO articleDTO) {
         try {
-            log.info("Création d'un nouvel article avec le code: {}", articleDTO.getCode());
+            log.info("Création d'un nouvel article avec le Nom: {}", articleDTO.getNom());
 
             // Validation métier
             validateArticleForCreation(articleDTO);
 
             // FIXED: Manual mapping instead of ModelMapper to avoid field mapping issues
             Article article = new Article();
-            article.setCode(articleDTO.getCode());
-            article.setDesignation(articleDTO.getDesignation());
+            article.setNom(articleDTO.getNom());
             article.setDescription(articleDTO.getDescription());
             article.setCategorie(articleDTO.getCategorie());
             article.setUnite(articleDTO.getUnite());
@@ -72,7 +71,7 @@ public class ArticleService {
 
             // Sauvegarde de l'article
             Article savedArticle = articleRepository.save(article);
-            log.info("Article sauvegardé avec succès: ID={}, Code={}", savedArticle.getId(), savedArticle.getCode());
+            log.info("Article sauvegardé avec succès: ID={}, Nom={}", savedArticle.getId(), savedArticle.getNom());
 
             // Création du stock initial (quantité 0)
             createInitialStock(savedArticle);
@@ -181,14 +180,14 @@ public class ArticleService {
     }
 
     /**
-     * Récupérer un article par code
+     * Récupérer un article par Nom
      */
     @Transactional(readOnly = true)
-    public ArticleDTO getArticleByCode(String code) {
-        log.debug("Récupération de l'article avec le code: {}", code);
+    public ArticleDTO getArticleByNom(String Nom) {
+        log.debug("Récupération de l'article avec le Nom: {}", Nom);
 
-        Article article = articleRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Article introuvable avec le code: " + code));
+        Article article = articleRepository.findByNom(Nom)
+                .orElseThrow(() -> new RuntimeException("Article introuvable avec le Nom: " + Nom));
 
         return convertToDTO(article);
     }
@@ -454,19 +453,19 @@ public class ArticleService {
     // ===============================
 
     /**
-     * Vérifier si un code article existe
+     * Vérifier si un Nom article existe
      */
     @Transactional(readOnly = true)
-    public boolean existsByCode(String code) {
-        return articleRepository.existsByCode(code);
+    public boolean existsByNom(String Nom) {
+        return articleRepository.existsByNom(Nom);
     }
 
     /**
-     * Vérifier si un code article existe (en excluant un ID)
+     * Vérifier si un Nom article existe (en excluant un ID)
      */
     @Transactional(readOnly = true)
-    public boolean existsByCodeAndIdNot(String code, Long id) {
-        return articleRepository.existsByCodeAndIdNot(code, id);
+    public boolean existsByNomAndIdNot(String Nom, Long id) {
+        return articleRepository.existsByNomAndIdNot(Nom, id);
     }
 
     // ===============================
@@ -474,18 +473,14 @@ public class ArticleService {
     // ===============================
 
     private void validateArticleForCreation(ArticleDTO articleDTO) {
-        log.debug("Validation de l'article pour création: {}", articleDTO.getCode());
+        log.debug("Validation de l'article pour création: {}", articleDTO.getNom());
 
-        if (articleDTO.getCode() == null || articleDTO.getCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("Le code article est obligatoire");
+        if (articleDTO.getNom() == null || articleDTO.getNom().trim().isEmpty()) {
+            throw new IllegalArgumentException("Le Nom article est obligatoire");
         }
 
-        if (existsByCode(articleDTO.getCode())) {
-            throw new IllegalArgumentException("Un article avec ce code existe déjà: " + articleDTO.getCode());
-        }
-
-        if (articleDTO.getDesignation() == null || articleDTO.getDesignation().trim().isEmpty()) {
-            throw new IllegalArgumentException("La désignation est obligatoire");
+        if (existsByNom(articleDTO.getNom())) {
+            throw new IllegalArgumentException("Un article avec ce Nom existe déjà: " + articleDTO.getNom());
         }
 
         if (articleDTO.getPrixUnitaire() != null && articleDTO.getPrixUnitaire().compareTo(BigDecimal.ZERO) <= 0) {
@@ -509,13 +504,11 @@ public class ArticleService {
     private void validateArticleForUpdate(Long id, ArticleDTO articleDTO) {
         log.debug("Validation de l'article pour mise à jour: ID={}", id);
 
-        if (articleDTO.getCode() != null && existsByCodeAndIdNot(articleDTO.getCode(), id)) {
-            throw new IllegalArgumentException("Un autre article avec ce code existe déjà: " + articleDTO.getCode());
+        if (articleDTO.getNom() != null && existsByNomAndIdNot(articleDTO.getNom(), id)) {
+            throw new IllegalArgumentException("Un autre article avec ce Nom existe déjà: " + articleDTO.getNom());
         }
 
-        if (articleDTO.getDesignation() != null && articleDTO.getDesignation().trim().isEmpty()) {
-            throw new IllegalArgumentException("La désignation ne peut pas être vide");
-        }
+
 
         if (articleDTO.getPrixUnitaire() != null && articleDTO.getPrixUnitaire().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le prix unitaire doit être positif");
@@ -536,7 +529,7 @@ public class ArticleService {
     }
 
     private void validateArticleForDeletion(Article article) {
-        log.debug("Validation de l'article pour suppression: {}", article.getCode());
+        log.debug("Validation de l'article pour suppression: {}", article.getNom());
 
         // Vérifier s'il y a du stock
         Optional<Stock> stock = stockRepository.findByArticleId(article.getId());
@@ -554,12 +547,10 @@ public class ArticleService {
     // ===============================
 
     private void updateArticleFields(Article existingArticle, ArticleDTO articleDTO) {
-        if (articleDTO.getCode() != null) {
-            existingArticle.setCode(articleDTO.getCode());
+        if (articleDTO.getNom() != null) {
+            existingArticle.setNom(articleDTO.getNom());
         }
-        if (articleDTO.getDesignation() != null) {
-            existingArticle.setDesignation(articleDTO.getDesignation());
-        }
+
         if (articleDTO.getDescription() != null) {
             existingArticle.setDescription(articleDTO.getDescription());
         }
@@ -596,12 +587,12 @@ public class ArticleService {
     // FIXED: Enhanced createInitialStock with better error handling
     private void createInitialStock(Article article) {
         try {
-            log.debug("Création du stock initial pour l'article: {}", article.getCode());
+            log.debug("Création du stock initial pour l'article: {}", article.getNom());
 
             // Vérifier si le stock existe déjà
             Optional<Stock> existingStock = stockRepository.findByArticleId(article.getId());
             if (existingStock.isPresent()) {
-                log.warn("Stock déjà existant pour l'article: {}", article.getCode());
+                log.warn("Stock déjà existant pour l'article: {}", article.getNom());
                 return;
             }
 
@@ -620,11 +611,11 @@ public class ArticleService {
             }
 
             stockRepository.save(stock);
-            log.debug("Stock initial créé avec succès pour l'article: {}", article.getCode());
+            log.debug("Stock initial créé avec succès pour l'article: {}", article.getNom());
 
         } catch (Exception e) {
             log.error("Erreur lors de la création du stock initial pour l'article {}: {}",
-                    article.getCode(), e.getMessage(), e);
+                    article.getNom(), e.getMessage(), e);
             throw new RuntimeException("Erreur lors de la création du stock initial", e);
         }
     }
@@ -632,14 +623,13 @@ public class ArticleService {
     // FIXED: Enhanced convertToDTO with better null handling
     private ArticleDTO convertToDTO(Article article) {
         try {
-            log.trace("Conversion de l'article vers DTO: {}", article.getCode());
+            log.trace("Conversion de l'article vers DTO: {}", article.getNom());
 
             ArticleDTO dto = new ArticleDTO();
 
             // Mapping manuel pour éviter les problèmes de ModelMapper
             dto.setId(article.getId());
-            dto.setCode(article.getCode());
-            dto.setDesignation(article.getDesignation());
+            dto.setNom(article.getNom());
             dto.setDescription(article.getDescription());
             dto.setCategorie(article.getCategorie());
             dto.setUnite(article.getUnite());
@@ -666,7 +656,7 @@ public class ArticleService {
                 } catch (Exception e) {
                     // En cas d'erreur avec le lazy loading du stock, continuer sans les infos de stock
                     log.warn("Impossible de charger les informations de stock pour l'article {}: {}",
-                            article.getCode(), e.getMessage());
+                            article.getNom(), e.getMessage());
                 }
             }
 

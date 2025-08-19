@@ -18,7 +18,7 @@ public class StockDTO {
     private Long articleId;
 
     // Informations de l'article (lecture seule)
-    private String articleCode;
+    private String articleNom;
     private String articleDesignation;
     private String articleCategorie;
     private String articleUnite;

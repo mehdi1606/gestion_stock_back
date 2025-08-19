@@ -71,7 +71,6 @@ public class DashboardDTO {
     public static class AlerteStockDTO {
         private Long articleId;
         private String articleCode;
-        private String articleDesignation;
         private String typeAlerte; // "CRITIQUE", "FAIBLE", "EXCESSIF"
         private Integer quantiteActuelle;
         private Integer stockMin;
@@ -80,11 +79,10 @@ public class DashboardDTO {
         private String priorite; // "HAUTE", "MOYENNE", "BASSE"
         private LocalDate dateAlerte;
 
-        public AlerteStockDTO(Long articleId, String articleCode, String articleDesignation,
+        public AlerteStockDTO(Long articleId, String articleCode,
                               String typeAlerte, Integer quantiteActuelle, Integer stockMin) {
             this.articleId = articleId;
             this.articleCode = articleCode;
-            this.articleDesignation = articleDesignation;
             this.typeAlerte = typeAlerte;
             this.quantiteActuelle = quantiteActuelle;
             this.stockMin = stockMin;

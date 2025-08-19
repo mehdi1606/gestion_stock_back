@@ -50,7 +50,7 @@
              * Créer un nouveau fournisseur
              */
             public FournisseurDTO createFournisseur(FournisseurDTO fournisseurDTO) {
-                log.info("Création d'un nouveau fournisseur: {}", fournisseurDTO.getCode());
+                log.info("Création d'un nouveau fournisseur: {}", fournisseurDTO.getNom());
 
                 // Validation métier
                 validateFournisseurForCreation(fournisseurDTO);
@@ -64,7 +64,7 @@
                 // Sauvegarde
                 Fournisseur savedFournisseur = fournisseurRepository.save(fournisseur);
 
-                log.info("Fournisseur créé avec succès: ID={}, Code={}", savedFournisseur.getId(), savedFournisseur.getCode());
+                log.info("Fournisseur créé avec succès: ID={}, Nom={}", savedFournisseur.getId(), savedFournisseur.getNom());
 
                 return convertToDTO(savedFournisseur);
             }
@@ -89,7 +89,7 @@
 
                 Fournisseur updatedFournisseur = fournisseurRepository.save(existingFournisseur);
 
-                log.info("Fournisseur mis à jour avec succès: ID={}, Code={}", updatedFournisseur.getId(), updatedFournisseur.getCode());
+                log.info("Fournisseur mis à jour avec succès: ID={}, Nom={}", updatedFournisseur.getId(), updatedFournisseur.getNom());
 
                 return convertToDTO(updatedFournisseur);
             }
@@ -110,7 +110,7 @@
                 fournisseur.setActif(false);
                 fournisseurRepository.save(fournisseur);
 
-                log.info("Fournisseur supprimé (désactivé) avec succès: ID={}, Code={}", fournisseur.getId(), fournisseur.getCode());
+                log.info("Fournisseur supprimé (désactivé) avec succès: ID={}, Nom={}", fournisseur.getId(), fournisseur.getNom());
             }
 
             /**
@@ -125,7 +125,7 @@
                 fournisseur.setActif(true);
                 Fournisseur reactivatedFournisseur = fournisseurRepository.save(fournisseur);
 
-                log.info("Fournisseur réactivé avec succès: ID={}, Code={}", reactivatedFournisseur.getId(), reactivatedFournisseur.getCode());
+                log.info("Fournisseur réactivé avec succès: ID={}, Nom={}", reactivatedFournisseur.getId(), reactivatedFournisseur.getNom());
 
                 return convertToDTO(reactivatedFournisseur);
             }
@@ -148,14 +148,14 @@
             }
 
             /**
-             * Récupérer un fournisseur par code
+             * Récupérer un fournisseur par Nom
              */
             @Transactional(readOnly = true)
-            public FournisseurDTO getFournisseurByCode(String code) {
-                log.debug("Récupération du fournisseur par code: {}", code);
+            public FournisseurDTO getFournisseurByNom(String Nom) {
+                log.debug("Récupération du fournisseur par Nom: {}", Nom);
 
-                Fournisseur fournisseur = fournisseurRepository.findByCode(code)
-                        .orElseThrow(() -> new RuntimeException("Fournisseur introuvable avec le code: " + code));
+                Fournisseur fournisseur = fournisseurRepository.findByNom(Nom)
+                        .orElseThrow(() -> new RuntimeException("Fournisseur introuvable avec le Nom: " + Nom));
 
                 return convertToDTO(fournisseur);
             }
@@ -439,19 +439,19 @@
             // ===============================
 
             /**
-             * Vérifier si un code fournisseur existe
+             * Vérifier si un Nom fournisseur existe
              */
             @Transactional(readOnly = true)
-            public boolean existsByCode(String code) {
-                return fournisseurRepository.existsByCode(code);
+            public boolean existsByNom(String Nom) {
+                return fournisseurRepository.existsByNom(Nom);
             }
 
             /**
-             * Vérifier si un code fournisseur existe (en excluant un ID)
+             * Vérifier si un Nom fournisseur existe (en excluant un ID)
              */
             @Transactional(readOnly = true)
-            public boolean existsByCodeAndIdNot(String code, Long id) {
-                return fournisseurRepository.existsByCodeAndIdNot(code, id);
+            public boolean existsByNomAndIdNot(String Nom, Long id) {
+                return fournisseurRepository.existsByNomAndIdNot(Nom, id);
             }
 
             /**
@@ -475,13 +475,13 @@
             // ===============================
 
             private void validateFournisseurForCreation(FournisseurDTO fournisseurDTO) {
-                // Validation du code
-                if (fournisseurDTO.getCode() == null || fournisseurDTO.getCode().trim().isEmpty()) {
-                    throw new IllegalArgumentException("Le code fournisseur est obligatoire");
+                // Validation du Nom
+                if (fournisseurDTO.getNom() == null || fournisseurDTO.getNom().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Le Nom fournisseur est obligatoire");
                 }
 
-                if (existsByCode(fournisseurDTO.getCode())) {
-                    throw new IllegalArgumentException("Un fournisseur avec ce code existe déjà: " + fournisseurDTO.getCode());
+                if (existsByNom(fournisseurDTO.getNom())) {
+                    throw new IllegalArgumentException("Un fournisseur avec ce Nom existe déjà: " + fournisseurDTO.getNom());
                 }
 
                 // Validation du nom
@@ -524,9 +524,9 @@
             }
 
             private void validateFournisseurForUpdate(Long id, FournisseurDTO fournisseurDTO) {
-                // Validation du code (unicité)
-                if (fournisseurDTO.getCode() != null && existsByCodeAndIdNot(fournisseurDTO.getCode(), id)) {
-                    throw new IllegalArgumentException("Un autre fournisseur avec ce code existe déjà: " + fournisseurDTO.getCode());
+                // Validation du Nom (unicité)
+                if (fournisseurDTO.getNom() != null && existsByNomAndIdNot(fournisseurDTO.getNom(), id)) {
+                    throw new IllegalArgumentException("Un autre fournisseur avec ce Nom existe déjà: " + fournisseurDTO.getNom());
                 }
 
                 // Validation du nom
@@ -578,7 +578,7 @@
                 List<StockMovement> recentMovements = stockMovementRepository.findByFournisseurIdOrderByDateMouvementDesc(fournisseur.getId());
                 if (!recentMovements.isEmpty()) {
                     // Vérification plus fine si nécessaire
-                    log.warn("Tentative de suppression d'un fournisseur avec des mouvements récents: {}", fournisseur.getCode());
+                    log.warn("Tentative de suppression d'un fournisseur avec des mouvements récents: {}", fournisseur.getNom());
                 }
             }
 
@@ -587,8 +587,8 @@
             // ===============================
 
             private void updateFournisseurFields(Fournisseur existingFournisseur, FournisseurDTO fournisseurDTO) {
-                if (fournisseurDTO.getCode() != null) {
-                    existingFournisseur.setCode(fournisseurDTO.getCode());
+                if (fournisseurDTO.getNom() != null) {
+                    existingFournisseur.setNom(fournisseurDTO.getNom());
                 }
                 if (fournisseurDTO.getNom() != null) {
                     existingFournisseur.setNom(fournisseurDTO.getNom());
@@ -644,9 +644,9 @@
             }
 
             private void normalizeFournisseurData(Fournisseur fournisseur) {
-                // Normalisation du code (majuscules)
-                if (fournisseur.getCode() != null) {
-                    fournisseur.setCode(fournisseur.getCode().trim().toUpperCase());
+                // Normalisation du Nom (majuscules)
+                if (fournisseur.getNom() != null) {
+                    fournisseur.setNom(fournisseur.getNom().trim().toUpperCase());
                 }
 
                 // Normalisation du nom
@@ -855,42 +855,41 @@
             /**
              * Dupliquer un fournisseur (pour créer un fournisseur similaire)
              */
-            public FournisseurDTO duplicateFournisseur(Long fournisseurId, String newCode, String newNom) {
-                log.info("Duplication du fournisseur ID: {} avec nouveau code: {}", fournisseurId, newCode);
+            public FournisseurDTO duplicateFournisseur(Long fournisseurId, String newNom) {
+                log.info("Duplication du fournisseur ID: {} avec nouveau Nom: {}", fournisseurId, newNom);
 
                 Fournisseur originalFournisseur = fournisseurRepository.findById(fournisseurId)
                         .orElseThrow(() -> new RuntimeException("Fournisseur introuvable avec l'ID: " + fournisseurId));
 
-                // Validation du nouveau code
-                if (existsByCode(newCode)) {
-                    throw new IllegalArgumentException("Un fournisseur avec ce code existe déjà: " + newCode);
+                // Validation du nouveau Nom
+                if (existsByNom(newNom)) {
+                    throw new IllegalArgumentException("Un fournisseur avec ce Nom existe déjà: " + newNom);
                 }
 
                 // Création du nouveau fournisseur
                 Fournisseur newFournisseur = new Fournisseur();
 
-                // Copie des informations (sauf ID, code, nom, et timestamps)
-                newFournisseur.setCode(newCode);
+                // Copie des informations (sauf ID, Nom, nom, et timestamps)
+                newFournisseur.setNom(newNom);
                 newFournisseur.setNom(newNom);
                 newFournisseur.setRaisonSociale(originalFournisseur.getRaisonSociale());
                 newFournisseur.setAdresse(originalFournisseur.getAdresse());
                 newFournisseur.setVille(originalFournisseur.getVille());
                 newFournisseur.setCodePostal(originalFournisseur.getCodePostal());
                 newFournisseur.setPays(originalFournisseur.getPays());
-                // Note: email et téléphone ne sont pas copiés pour éviter les doublons
                 newFournisseur.setSiteWeb(originalFournisseur.getSiteWeb());
                 newFournisseur.setContactPrincipal(originalFournisseur.getContactPrincipal());
                 newFournisseur.setConditionsPaiement(originalFournisseur.getConditionsPaiement());
                 newFournisseur.setDelaiLivraison(originalFournisseur.getDelaiLivraison());
                 newFournisseur.setActif(true);
-                newFournisseur.setNotes("Dupliqué depuis: " + originalFournisseur.getCode());
+                newFournisseur.setNotes("Dupliqué depuis: " + originalFournisseur.getNom());
 
                 // Normalisation des données
                 normalizeFournisseurData(newFournisseur);
 
                 Fournisseur savedFournisseur = fournisseurRepository.save(newFournisseur);
 
-                log.info("Fournisseur dupliqué avec succès: ID={}, Code={}", savedFournisseur.getId(), savedFournisseur.getCode());
+                log.info("Fournisseur dupliqué avec succès: ID={}, Nom={}", savedFournisseur.getId(), savedFournisseur.getNom());
 
                 return convertToDTO(savedFournisseur);
             }
@@ -917,7 +916,7 @@
 
                 // Ajouter une note sur la fusion
                 String mergeNote = String.format("Fusionné avec fournisseur %s (%s) le %s",
-                        deleteFournisseur.getCode(),
+                        deleteFournisseur.getNom(),
                         deleteFournisseur.getNom(),
                         LocalDateTime.now().toString());
 
@@ -929,7 +928,7 @@
 
                 // Supprimer le fournisseur (suppression logique)
                 deleteFournisseur.setActif(false);
-                deleteFournisseur.setNotes(deleteFournisseur.getNotes() + "\nFusionné avec " + keepFournisseur.getCode());
+                deleteFournisseur.setNotes(deleteFournisseur.getNotes() + "\nFusionné avec " + keepFournisseur.getNom());
 
                 fournisseurRepository.save(deleteFournisseur);
                 Fournisseur updatedKeepFournisseur = fournisseurRepository.save(keepFournisseur);

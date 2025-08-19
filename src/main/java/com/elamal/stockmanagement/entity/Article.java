@@ -21,11 +21,8 @@ public class Article {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", unique = true, nullable = false, length = 50)
-    private String code;
-
-    @Column(name = "designation", nullable = false, length = 200)
-    private String designation;
+    @Column(name = "nom", nullable = false, length = 200)
+    private String nom;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

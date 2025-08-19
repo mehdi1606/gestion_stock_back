@@ -16,13 +16,10 @@ public class ArticleDTO {
 
     private Long id;
 
-    @NotBlank(message = "Le code article est obligatoire")
-    @Size(max = 50, message = "Le code ne peut pas dépasser 50 caractères")
-    private String code;
+    @NotBlank(message = "Le nom article est obligatoire")
+    @Size(max = 50, message = "Le nom ne peut pas dépasser 50 caractères")
+    private String nom;
 
-    @NotBlank(message = "La désignation est obligatoire")
-    @Size(max = 200, message = "La désignation ne peut pas dépasser 200 caractères")
-    private String designation;
 
     @Size(max = 1000, message = "La description ne peut pas dépasser 1000 caractères")
     private String description;
@@ -59,9 +56,8 @@ public class ArticleDTO {
     private LocalDateTime dateModification;
 
     // Constructeur pour création
-    public ArticleDTO(String code, String designation, String categorie, String unite, BigDecimal prixUnitaire) {
-        this.code = code;
-        this.designation = designation;
+    public ArticleDTO(String nom, String categorie, String unite, BigDecimal prixUnitaire) {
+        this.nom = nom;
         this.categorie = categorie;
         this.unite = unite;
         this.prixUnitaire = prixUnitaire;

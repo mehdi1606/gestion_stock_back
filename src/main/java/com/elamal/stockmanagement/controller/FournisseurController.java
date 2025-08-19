@@ -39,12 +39,12 @@ public class FournisseurController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Fournisseur créé avec succès"),
             @ApiResponse(responseCode = "400", description = "Données invalides ou fournisseur déjà existant"),
-            @ApiResponse(responseCode = "409", description = "Conflit - Code ou email déjà utilisé")
+            @ApiResponse(responseCode = "409", description = "Conflit - nom ou email déjà utilisé")
     })
     public ResponseEntity<ApiResponseDTO<FournisseurDTO>> createFournisseur(
             @Valid @RequestBody FournisseurDTO fournisseurDTO) {
 
-        log.info("Demande de création de fournisseur: {}", fournisseurDTO.getCode());
+        log.info("Demande de création de fournisseur: {}", fournisseurDTO.getNom());
 
         try {
             FournisseurDTO createdFournisseur = fournisseurService.createFournisseur(fournisseurDTO);
@@ -240,27 +240,27 @@ public class FournisseurController {
     }
 
     /**
-     * Récupérer un fournisseur par code
+     * Récupérer un fournisseur par nom
      */
     @GetMapping("/code/{code}")
-    @Operation(summary = "Récupérer par code", description = "Récupérer un fournisseur par son code")
+    @Operation(summary = "Récupérer par nom", description = "Récupérer un fournisseur par son nom")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Fournisseur trouvé"),
             @ApiResponse(responseCode = "404", description = "Fournisseur non trouvé")
     })
     public ResponseEntity<ApiResponseDTO<FournisseurDTO>> getFournisseurByCode(
-            @Parameter(description = "Code du fournisseur") @PathVariable String code) {
+            @Parameter(description = "Code du fournisseur") @PathVariable String nom) {
 
-        log.debug("Demande de récupération du fournisseur par code: {}", code);
+        log.debug("Demande de récupération du fournisseur par nom: {}", nom);
 
         try {
-            FournisseurDTO fournisseur = fournisseurService.getFournisseurByCode(code);
+            FournisseurDTO fournisseur = fournisseurService.getFournisseurByNom(nom);
 
             ApiResponseDTO<FournisseurDTO> response = ApiResponseDTO.success(fournisseur);
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
-            log.warn("Fournisseur non trouvé: Code {}", code);
+            log.warn("Fournisseur non trouvé: nom {}", nom);
 
             ApiResponseDTO<FournisseurDTO> response = ApiResponseDTO.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -647,27 +647,27 @@ public class FournisseurController {
     // ===============================
 
     /**
-     * Vérifier si un code fournisseur existe
+     * Vérifier si un nom fournisseur existe
      */
     @GetMapping("/exists/code/{code}")
-    @Operation(summary = "Vérifier existence code", description = "Vérifier si un code fournisseur existe")
+    @Operation(summary = "Vérifier existence nom", description = "Vérifier si un nom fournisseur existe")
     public ResponseEntity<ApiResponseDTO<Boolean>> existsByCode(
-            @Parameter(description = "Code à vérifier") @PathVariable String code) {
+            @Parameter(description = "Code à vérifier") @PathVariable String nom) {
 
-        log.debug("Vérification de l'existence du code: {}", code);
+        log.debug("Vérification de l'existence du nom: {}", nom);
 
         try {
-            boolean exists = fournisseurService.existsByCode(code);
+            boolean exists = fournisseurService.existsByNom(nom);
 
             String message = exists ? "Code déjà utilisé" : "Code disponible";
             ApiResponseDTO<Boolean> response = ApiResponseDTO.success(exists, message);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("Erreur lors de la vérification du code", e);
+            log.error("Erreur lors de la vérification du nom", e);
 
             ApiResponseDTO<Boolean> response = ApiResponseDTO.error(
-                    "Erreur lors de la vérification du code"
+                    "Erreur lors de la vérification du nom"
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -838,13 +838,13 @@ public class FournisseurController {
     })
     public ResponseEntity<ApiResponseDTO<FournisseurDTO>> duplicateFournisseur(
             @Parameter(description = "ID du fournisseur à dupliquer") @PathVariable Long id,
-            @Parameter(description = "Nouveau code") @RequestParam String newCode,
+            @Parameter(description = "Nouveau nom") @RequestParam String newCode,
             @Parameter(description = "Nouveau nom") @RequestParam String newNom) {
 
-        log.info("Demande de duplication du fournisseur ID: {} avec code: {}", id, newCode);
+        log.info("Demande de duplication du fournisseur ID: {} avec nom: {}", id, newCode);
 
         try {
-            FournisseurDTO duplicatedFournisseur = fournisseurService.duplicateFournisseur(id, newCode, newNom);
+            FournisseurDTO duplicatedFournisseur = fournisseurService.duplicateFournisseur(id, newNom);
 
             ApiResponseDTO<FournisseurDTO> response = ApiResponseDTO.success(
                     duplicatedFournisseur,

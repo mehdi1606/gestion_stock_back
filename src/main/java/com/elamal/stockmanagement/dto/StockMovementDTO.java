@@ -20,8 +20,7 @@ public class StockMovementDTO {
     private Long articleId;
 
     // Informations de l'article (lecture seule)
-    private String articleCode;
-    private String articleDesignation;
+    private String articleNom;
     private String articleUnite;
     private String articleCategorie;
 
@@ -284,6 +283,6 @@ public class StockMovementDTO {
     @Override
     public String toString() {
         return String.format("StockMovement{id=%d, article=%s, type=%s, quantite=%d, utilisateur='%s', date=%s}",
-                this.id, this.articleCode, this.typeMouvement, this.quantite, this.utilisateur, this.dateMouvement);
+                this.id, this.articleNom, this.typeMouvement, this.quantite, this.utilisateur, this.dateMouvement);
     }
 }

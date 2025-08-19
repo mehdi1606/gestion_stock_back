@@ -15,17 +15,17 @@ import java.util.Optional;
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
 
-    // Recherche par code
-    Optional<Article> findByCode(String code);
+    // Recherche par Nom
+    Optional<Article> findByNom(String Nom);
 
-    // Vérifier l'existence par code (pour validation)
-    boolean existsByCode(String code);
+    // Vérifier l'existence par Nom (pour validation)
+    boolean existsByNom(String Nom);
 
-    // Vérifier l'existence par code excluant un ID (pour mise à jour)
-    boolean existsByCodeAndIdNot(String code, Long id);
+    // Vérifier l'existence par Nom excluant un ID (pour mise à jour)
+    boolean existsByNomAndIdNot(String Nom, Long id);
 
-    // Recherche par désignation (insensible à la casse)
-    List<Article> findByDesignationContainingIgnoreCase(String designation);
+    List<Article> findByNomContainingIgnoreCase(String nom);
+
 
     // Recherche par catégorie
     List<Article> findByCategorie(String categorie);
@@ -39,10 +39,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
         // Articles par fournisseur principal
     List<Article> findByFournisseurPrincipalId(Long fournisseurId);
 
-    // Recherche multicritères avec pagination
+
     @Query("SELECT a FROM Article a WHERE " +
-            "(:query IS NULL OR LOWER(a.designation) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "                   LOWER(a.code) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "(:query IS NULL OR LOWER(a.nom) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "                   LOWER(a.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
             "(:categorie IS NULL OR a.categorie = :categorie) AND " +
             "(:fournisseurId IS NULL OR a.fournisseurPrincipal.id = :fournisseurId) AND " +
@@ -118,8 +117,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     // Recherche full-text avancée
     @Query("SELECT DISTINCT a FROM Article a LEFT JOIN a.fournisseurPrincipal f WHERE " +
-            "LOWER(a.code) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(a.designation) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(a.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(a.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(a.categorie) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(f.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")

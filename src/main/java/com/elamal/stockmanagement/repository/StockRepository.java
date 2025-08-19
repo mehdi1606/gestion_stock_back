@@ -119,15 +119,14 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     // Recherche textuelle dans les articles du stock
     @Query("SELECT s FROM Stock s JOIN s.article a WHERE " +
-            "(LOWER(a.code) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            " LOWER(a.designation) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "(LOWER(a.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             " LOWER(a.categorie) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             " LOWER(a.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
             "AND a.actif = true " +
             "ORDER BY " +
-            "CASE WHEN LOWER(a.code) LIKE LOWER(CONCAT(:searchTerm, '%')) THEN 1 " +
-            "     WHEN LOWER(a.designation) LIKE LOWER(CONCAT(:searchTerm, '%')) THEN 2 " +
-            "     ELSE 3 END, a.designation")
+            "CASE WHEN LOWER(a.nom) LIKE LOWER(CONCAT(:searchTerm, '%')) THEN 1 " +
+            "     WHEN LOWER(a.nom) LIKE LOWER(CONCAT(:searchTerm, '%')) THEN 2 " +
+            "     ELSE 3 END, a.nom")
     Page<Stock> searchStocks(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     // ===============================
@@ -299,10 +298,10 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     List<Stock> findByArticleFournisseurPrincipalId(@Param("fournisseurId") Long fournisseurId);
 
     // Valeur totale du stock par fournisseur
-    @Query("SELECT a.fournisseurPrincipal.nom, a.fournisseurPrincipal.code, " +
+    @Query("SELECT a.fournisseurPrincipal.nom, a.fournisseurPrincipal.nom, " +
             "COUNT(s), COALESCE(SUM(s.valeurStock), 0), SUM(s.quantiteActuelle) " +
             "FROM Stock s JOIN s.article a WHERE a.fournisseurPrincipal IS NOT NULL AND a.actif = true " +
-            "GROUP BY a.fournisseurPrincipal.id, a.fournisseurPrincipal.nom, a.fournisseurPrincipal.code " +
+            "GROUP BY a.fournisseurPrincipal.id, a.fournisseurPrincipal.nom, a.fournisseurPrincipal.nom " +
             "ORDER BY SUM(s.valeurStock) DESC")
     List<Object[]> getStockValueBySupplier();
 
@@ -358,7 +357,7 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     // ===============================
 
     // Articles sans stock initialisé
-    @Query("SELECT a.id, a.code, a.designation FROM Article a WHERE a.actif = true AND " +
+    @Query("SELECT a.id, a.nom FROM Article a WHERE a.actif = true AND " +
             "NOT EXISTS (SELECT 1 FROM Stock s WHERE s.article.id = a.id)")
     List<Object[]> findArticleIdsWithoutStock();
 

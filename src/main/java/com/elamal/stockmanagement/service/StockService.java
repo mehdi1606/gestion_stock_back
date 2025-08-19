@@ -646,7 +646,6 @@ public class StockService {
 
         Stock savedStock = stockRepository.save(newStock);
 
-        log.info("Stock initialisé avec succès pour l'article: {}", article.getCode());
 
         return convertToDTO(savedStock);
     }
@@ -676,8 +675,7 @@ public class StockService {
         // Enrichissement avec les informations de l'article
         if (stock.getArticle() != null) {
             Article article = stock.getArticle();
-            dto.setArticleCode(article.getCode());
-            dto.setArticleDesignation(article.getDesignation());
+            dto.setArticleNom(article.getNom());
             dto.setArticleCategorie(article.getCategorie());
             dto.setArticleUnite(article.getUnite());
             dto.setArticleStockMin(article.getStockMin());

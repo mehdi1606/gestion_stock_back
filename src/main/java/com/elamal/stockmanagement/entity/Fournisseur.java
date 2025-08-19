@@ -21,10 +21,6 @@ public class Fournisseur {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "code", unique = true, nullable = false, length = 50)
-    private String code;
-
     @Column(name = "nom", nullable = false, length = 200)
     private String nom;
 

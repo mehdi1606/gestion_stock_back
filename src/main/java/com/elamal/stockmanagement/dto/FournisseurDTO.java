@@ -14,9 +14,6 @@ public class FournisseurDTO {
 
     private Long id;
 
-    @NotBlank(message = "Le code fournisseur est obligatoire")
-    @Size(max = 50, message = "Le code ne peut pas dépasser 50 caractères")
-    private String code;
 
     @NotBlank(message = "Le nom du fournisseur est obligatoire")
     @Size(max = 200, message = "Le nom ne peut pas dépasser 200 caractères")
@@ -84,8 +81,7 @@ public class FournisseurDTO {
     private LocalDateTime dateModification;
 
     // Constructeur pour création simple
-    public FournisseurDTO(String code, String nom, String telephone, String email) {
-        this.code = code;
+    public FournisseurDTO( String nom, String telephone, String email) {
         this.nom = nom;
         this.telephone = telephone;
         this.email = email;
@@ -93,9 +89,9 @@ public class FournisseurDTO {
     }
 
     // Constructeur complet pour création
-    public FournisseurDTO(String code, String nom, String adresse, String ville,
+    public FournisseurDTO( String nom, String adresse, String ville,
                           String telephone, String email, String contactPrincipal) {
-        this.code = code;
+
         this.nom = nom;
         this.adresse = adresse;
         this.ville = ville;

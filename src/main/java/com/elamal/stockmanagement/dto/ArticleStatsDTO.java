@@ -15,8 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ArticleStatsDTO {
     private Long articleId;
-    private String articleCode;
-    private String articleDesignation;
+    private String articleNom;
 
     // Statistiques de mouvement
     private Integer totalEntrees;

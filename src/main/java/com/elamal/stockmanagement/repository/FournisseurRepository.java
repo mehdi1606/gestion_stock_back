@@ -16,14 +16,14 @@ import java.util.Optional;
 @Repository
 public interface FournisseurRepository extends JpaRepository<Fournisseur, Long> {
 
-    // Recherche par code
-    Optional<Fournisseur> findByCode(String code);
+    // Recherche par Nom
+    Optional<Fournisseur> findByNom(String nom);
 
-    // Vérifier l'existence par code
-    boolean existsByCode(String code);
+    // Vérifier l'existence par Nom
+    boolean existsByNom(String Nom);
 
-    // Vérifier l'existence par code excluant un ID (pour mise à jour)
-    boolean existsByCodeAndIdNot(String code, Long id);
+    // Vérifier l'existence par Nom excluant un ID (pour mise à jour)
+    boolean existsByNomAndIdNot(String Nom, Long id);
 
     // Recherche par nom (insensible à la casse)
     List<Fournisseur> findByNomContainingIgnoreCase(String nom);
@@ -49,7 +49,6 @@ public interface FournisseurRepository extends JpaRepository<Fournisseur, Long> 
     // Recherche multicritères avec pagination
     @Query("SELECT f FROM Fournisseur f WHERE " +
             "(:query IS NULL OR LOWER(f.nom) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "                   LOWER(f.code) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "                   LOWER(f.raisonSociale) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "                   LOWER(f.email) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
             "(:ville IS NULL OR LOWER(f.ville) = LOWER(:ville)) AND " +
@@ -118,7 +117,6 @@ public interface FournisseurRepository extends JpaRepository<Fournisseur, Long> 
 
     // Recherche full-text avancée
     @Query("SELECT f FROM Fournisseur f WHERE " +
-            "LOWER(f.code) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(f.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(f.raisonSociale) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(f.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
