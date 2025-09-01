@@ -147,230 +147,204 @@ public class StockController {
     // ALERTES ET NIVEAUX DE STOCK
     // ===============================
 
-    /**
-     * Récupérer les stocks critiques
-     */
-    @GetMapping("/alerts/critical")
-    @Operation(summary = "Stocks critiques", description = "Récupérer tous les stocks en niveau critique")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getCriticalStocks() {
+        /**
+         * Récupérer les stocks critiques - CRITICAL FOR FRONTEND
+         */
+        @GetMapping("/alerts/critical")
+        @Operation(summary = "Stocks critiques", description = "Récupérer tous les stocks en niveau critique")
+        public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getCriticalStocks() {
+            log.debug("Demande des stocks critiques");
 
-        log.debug("Demande des stocks critiques");
+            try {
+                List<StockDTO> stocks = stockService.getCriticalStocks();
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
+                        stocks,
+                        String.format("%d stocks critiques trouvés", stocks.size())
+                );
+                return ResponseEntity.ok(response);
 
-        try {
-            List<StockDTO> stocks = stockService.getCriticalStocks();
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks critiques trouvés", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks critiques", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks critiques"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des stocks critiques", e);
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des stocks critiques"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les stocks faibles
-     */
-    @GetMapping("/alerts/low")
-    @Operation(summary = "Stocks faibles", description = "Récupérer tous les stocks en niveau faible")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getLowStocks() {
+        /**
+         * Récupérer les stocks faibles - REQUIRED BY FRONTEND
+         */
+        @GetMapping("/alerts/low")
+        @Operation(summary = "Stocks faibles", description = "Récupérer tous les stocks en niveau faible")
+        public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getLowStocks() {
+            log.debug("Demande des stocks faibles");
 
-        log.debug("Demande des stocks faibles");
+            try {
+                List<StockDTO> stocks = stockService.getLowStocks();
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
+                        stocks,
+                        String.format("%d stocks faibles trouvés", stocks.size())
+                );
+                return ResponseEntity.ok(response);
 
-        try {
-            List<StockDTO> stocks = stockService.getLowStocks();
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks faibles trouvés", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks faibles", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks faibles"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des stocks faibles", e);
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des stocks faibles"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les stocks vides
-     */
-    @GetMapping("/alerts/empty")
-    @Operation(summary = "Stocks vides", description = "Récupérer tous les stocks vides")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getEmptyStocks() {
+        /**
+         * Récupérer les stocks vides - REQUIRED BY FRONTEND
+         */
+        @GetMapping("/alerts/empty")
+        @Operation(summary = "Stocks vides", description = "Récupérer tous les stocks vides")
+        public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getEmptyStocks() {
+            log.debug("Demande des stocks vides");
 
-        log.debug("Demande des stocks vides");
+            try {
+                List<StockDTO> stocks = stockService.getEmptyStocks();
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
+                        stocks,
+                        String.format("%d stocks vides trouvés", stocks.size())
+                );
+                return ResponseEntity.ok(response);
 
-        try {
-            List<StockDTO> stocks = stockService.getEmptyStocks();
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks vides trouvés", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks vides", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks vides"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des stocks vides", e);
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des stocks vides"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les stocks excessifs
-     */
-    @GetMapping("/alerts/excessive")
-    @Operation(summary = "Stocks excessifs", description = "Récupérer tous les stocks en niveau excessif")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getExcessiveStocks() {
+        /**
+         * Récupérer les stocks excessifs - REQUIRED BY FRONTEND
+         */
+        @GetMapping("/alerts/excessive")
+        @Operation(summary = "Stocks excessifs", description = "Récupérer tous les stocks en niveau excessif")
+        public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getExcessiveStocks() {
+            log.debug("Demande des stocks excessifs");
 
-        log.debug("Demande des stocks excessifs");
+            try {
+                List<StockDTO> stocks = stockService.getExcessiveStocks();
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
+                        stocks,
+                        String.format("%d stocks excessifs trouvés", stocks.size())
+                );
+                return ResponseEntity.ok(response);
 
-        try {
-            List<StockDTO> stocks = stockService.getExcessiveStocks();
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks excessifs trouvés", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks excessifs", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks excessifs"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des stocks excessifs", e);
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des stocks excessifs"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les stocks nécessitant un réapprovisionnement
-     */
-    @GetMapping("/alerts/reorder")
-    @Operation(summary = "Stocks à réapprovisionner", description = "Récupérer les stocks nécessitant un réapprovisionnement")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getStocksNeedingReorder() {
+        /**
+         * Récupérer les stocks nécessitant un réapprovisionnement
+         */
+        @GetMapping("/alerts/reorder")
+        @Operation(summary = "Stocks à réapprovisionner", description = "Récupérer les stocks nécessitant un réapprovisionnement")
+        public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getStocksNeedingReorder() {
+            log.debug("Demande des stocks nécessitant un réapprovisionnement");
 
-        log.debug("Demande des stocks nécessitant un réapprovisionnement");
+            try {
+                List<StockDTO> stocks = stockService.getStocksNeedingReorder();
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
+                        stocks,
+                        String.format("%d stocks nécessitent un réapprovisionnement", stocks.size())
+                );
+                return ResponseEntity.ok(response);
 
-        try {
-            List<StockDTO> stocks = stockService.getStocksNeedingReorder();
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks nécessitent un réapprovisionnement", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks à réapprovisionner", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks à réapprovisionner"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des stocks à réapprovisionner", e);
+                ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des stocks à réapprovisionner"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les stocks nécessitant attention
-     */
-    @GetMapping("/alerts/attention")
-    @Operation(summary = "Stocks nécessitant attention", description = "Récupérer les stocks nécessitant une attention particulière")
-    public ResponseEntity<ApiResponseDTO<List<StockDTO>>> getStocksRequiringAttention() {
+        // ===============================
+        // STATISTIQUES DE STOCK
+        // ===============================
 
-        log.debug("Demande des stocks nécessitant attention");
+        /**
+         * Obtenir les statistiques générales des stocks
+         */
+        @GetMapping("/stats/general")
+        @Operation(summary = "Statistiques générales", description = "Obtenir les statistiques générales des stocks")
+        public ResponseEntity<ApiResponseDTO<Object>> getStockStatistics() {
+            log.debug("Demande des statistiques générales des stocks");
 
-        try {
-            List<StockDTO> stocks = stockService.getStocksRequiringAttention();
+            try {
+                Object statistics = stockService.getGeneralStockStatistics();
+                ApiResponseDTO<Object> response = ApiResponseDTO.success(
+                        statistics,
+                        "Statistiques générales récupérées avec succès"
+                );
+                return ResponseEntity.ok(response);
 
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.success(
-                    stocks,
-                    String.format("%d stocks nécessitent attention", stocks.size())
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des stocks nécessitant attention", e);
-
-            ApiResponseDTO<List<StockDTO>> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des stocks nécessitant attention"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors de la récupération des statistiques", e);
+                ApiResponseDTO<Object> response = ApiResponseDTO.error(
+                        "Erreur lors de la récupération des statistiques"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    // ===============================
-    // STATISTIQUES ET VALEURS
-    // ===============================
+        /**
+         * Compter le nombre d'articles en stock
+         */
+        @GetMapping("/stats/count-articles")
+        @Operation(summary = "Compter articles en stock", description = "Compter le nombre total d'articles en stock")
+        public ResponseEntity<ApiResponseDTO<Long>> countArticlesInStock() {
+            log.debug("Comptage des articles en stock");
 
-    /**
-     * Calculer la valeur totale du stock
-     */
-    @GetMapping("/stats/total-value")
-    @Operation(summary = "Valeur totale du stock", description = "Calculer la valeur totale de tous les stocks")
-    public ResponseEntity<ApiResponseDTO<BigDecimal>> getTotalStockValue() {
+            try {
+                Long count = stockService.countArticlesInStock();
+                ApiResponseDTO<Long> response = ApiResponseDTO.success(
+                        count,
+                        String.format("%d articles en stock", count)
+                );
+                return ResponseEntity.ok(response);
 
-        log.debug("Calcul de la valeur totale du stock");
-
-        try {
-            BigDecimal totalValue = stockService.getTotalStockValue();
-
-            ApiResponseDTO<BigDecimal> response = ApiResponseDTO.success(
-                    totalValue,
-                    "Valeur totale du stock calculée avec succès"
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors du calcul de la valeur totale", e);
-
-            ApiResponseDTO<BigDecimal> response = ApiResponseDTO.error(
-                    "Erreur lors du calcul de la valeur totale du stock"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } catch (Exception e) {
+                log.error("Erreur lors du comptage des articles", e);
+                ApiResponseDTO<Long> response = ApiResponseDTO.error(
+                        "Erreur lors du comptage des articles en stock"
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
         }
-    }
 
-    /**
-     * Récupérer les statistiques générales du stock
-     */
-    @GetMapping("/stats/general")
-    @Operation(summary = "Statistiques générales", description = "Récupérer les statistiques générales du stock")
-    public ResponseEntity<ApiResponseDTO<Object>> getGeneralStockStatistics() {
+        // ===============================
+        // HEALTH CHECK
+        // ===============================
 
-        log.debug("Récupération des statistiques générales du stock");
-
-        try {
-            Object statistics = stockService.getGeneralStockStatistics();
-
-            ApiResponseDTO<Object> response = ApiResponseDTO.success(statistics);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des statistiques générales", e);
-
-            ApiResponseDTO<Object> response = ApiResponseDTO.error(
-                    "Erreur lors de la récupération des statistiques générales"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        /**
+         * Health check pour le service stock
+         */
+        @GetMapping("/health")
+        @Operation(summary = "Health check", description = "Vérifier la santé du service stock")
+        public ResponseEntity<ApiResponseDTO<String>> healthCheck() {
+            try {
+                String message = "Service Stock opérationnel";
+                return ResponseEntity.ok(ApiResponseDTO.success(message));
+            } catch (Exception e) {
+                log.error("Erreur lors du health check stock", e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ApiResponseDTO.error("Service Stock indisponible"));
+            }
         }
-    }
 
     /**
      * Récupérer les statistiques détaillées par statut
@@ -1147,30 +1121,7 @@ public class StockController {
     /**
      * Compter le nombre d'articles en stock
      */
-    @GetMapping("/stats/count-articles")
-    @Operation(summary = "Compter articles en stock", description = "Compter le nombre total d'articles en stock")
-    public ResponseEntity<ApiResponseDTO<Long>> countArticlesInStock() {
 
-        log.debug("Comptage des articles en stock");
-
-        try {
-            Long count = stockService.countArticlesInStock();
-
-            ApiResponseDTO<Long> response = ApiResponseDTO.success(
-                    count,
-                    String.format("%d articles en stock", count)
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors du comptage des articles", e);
-
-            ApiResponseDTO<Long> response = ApiResponseDTO.error(
-                    "Erreur lors du comptage des articles en stock"
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
 
     /**
      * Initialiser le stock pour un article

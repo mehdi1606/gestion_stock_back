@@ -24,6 +24,7 @@ public class StockDTO {
     private String articleUnite;
     private Integer articleStockMin;
     private Integer articleStockMax;
+    private String statutStock; // NORMAL, CRITIQUE, FAIBLE, EXCESSIF, VIDE
 
     @Min(value = 0, message = "La quantité actuelle ne peut pas être négative")
     private Integer quantiteActuelle = 0;
@@ -54,7 +55,6 @@ public class StockDTO {
     private Boolean stockFaible;
     private Boolean stockCritique;
     private Boolean stockExcessif;
-    private String statutStock; // "NORMAL", "FAIBLE", "CRITIQUE", "EXCESSIF"
 
     // Constructeur pour initialisation
     public StockDTO(Long articleId, Integer quantiteInitiale, BigDecimal prixInitial) {

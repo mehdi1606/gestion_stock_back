@@ -1,388 +1,401 @@
-    package com.elamal.stockmanagement.service;
+package com.elamal.stockmanagement.service;
 
-    import com.elamal.stockmanagement.dto.DashboardDTO;
-    import com.elamal.stockmanagement.dto.DashboardDTO.*;
-    import com.elamal.stockmanagement.entity.*;
-    import com.elamal.stockmanagement.repository.*;
-    import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
-    import org.springframework.data.domain.PageRequest;
-    import org.springframework.data.domain.Pageable;
-    import org.springframework.stereotype.Service;
-    import org.springframework.transaction.annotation.Transactional;
+import com.elamal.stockmanagement.dto.DashboardDTO;
+import com.elamal.stockmanagement.dto.DashboardDTO.*;
+import com.elamal.stockmanagement.entity.*;
+import com.elamal.stockmanagement.repository.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-    import java.math.BigDecimal;
-    import java.time.LocalDate;
-    import java.time.LocalDateTime;
-    import java.util.*;
-    import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-    @Service
-    @RequiredArgsConstructor
-    @Slf4j
-    @Transactional(readOnly = true)
-    public class DashboardService {
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class DashboardService {
 
-        private final ArticleRepository articleRepository;
-        private final FournisseurRepository fournisseurRepository;
-        private final StockRepository stockRepository;
-        private final StockMovementRepository stockMovementRepository;
+    private final ArticleRepository articleRepository;
+    private final FournisseurRepository fournisseurRepository;
+    private final StockRepository stockRepository;
+    private final StockMovementRepository stockMovementRepository;
 
-        // ===============================
-        // DASHBOARD PRINCIPAL
-        // ===============================
+    // ===============================
+    // DASHBOARD PRINCIPAL
+    // ===============================
 
-        /**
-         * Récupérer toutes les données du dashboard
-         */
-        public DashboardDTO getDashboardData() {
-            log.info("Génération des données du dashboard");
+    /**
+     * Récupérer toutes les données du dashboard
+     */
+    public DashboardDTO getDashboardData() {
+        log.info("Génération des données du dashboard");
 
-            // Génération des statistiques générales
-            StatsGeneralesDTO statsGenerales = generateGeneralStats();
+        // Génération des statistiques générales
+        StatsGeneralesDTO statsGenerales = generateGeneralStats();
 
-            // Génération des données pour les graphiques
-            List<ChartDataDTO> stockParCategorie = generateStockByCategory();
-            List<ChartDataDTO> mouvementsTendance = generateMovementsTrend(7);
-            List<ChartDataDTO> topArticlesConsommes = generateTopConsumedArticles(30, 10);
+        // Génération des données pour les graphiques
+        List<ChartDataDTO> stockParCategorie = generateStockByCategory();
+        List<ChartDataDTO> mouvementsTendance = generateMovementsTrend(7);
+        List<ChartDataDTO> topArticlesConsommes = generateTopConsumedArticles(30, 10);
 
-            // Génération des alertes
-            List<AlerteStockDTO> alertes = generateStockAlerts();
+        // Génération des alertes
+        List<AlerteStockDTO> alertes = generateStockAlerts();
 
-            // Génération des activités récentes
-            List<ActiviteRecenteDTO> activitesRecentes = generateRecentActivities(10);
+        // Génération des activités récentes
+        List<ActiviteRecenteDTO> activitesRecentes = generateRecentActivities(10);
 
-            DashboardDTO dashboard = new DashboardDTO();
-            dashboard.setStatsGenerales(statsGenerales);
-            dashboard.setStockParCategorie(stockParCategorie);
-            dashboard.setMouvementsTendance(mouvementsTendance);
-            dashboard.setTopArticlesConsommes(topArticlesConsommes);
-            dashboard.setAlertes(alertes);
-            dashboard.setActivitesRecentes(activitesRecentes);
+        DashboardDTO dashboard = new DashboardDTO();
+        dashboard.setStatsGenerales(statsGenerales);
+        dashboard.setStockParCategorie(stockParCategorie);
+        dashboard.setMouvementsTendance(mouvementsTendance);
+        dashboard.setTopArticlesConsommes(topArticlesConsommes);
+        dashboard.setAlertes(alertes);
+        dashboard.setActivitesRecentes(activitesRecentes);
 
-            log.info("Dashboard généré avec succès - {} alertes, {} activités",
-                    alertes.size(), activitesRecentes.size());
+        log.info("Dashboard généré avec {} catégories, {} mouvements, {} articles top",
+                stockParCategorie.size(), mouvementsTendance.size(), topArticlesConsommes.size());
 
-            return dashboard;
-        }
+        return dashboard;
+    }
 
-        /**
-         * Récupérer uniquement les statistiques générales
-         */
-        public StatsGeneralesDTO getGeneralStatistics() {
-            log.debug("Génération des statistiques générales");
+    /**
+     * Récupérer les statistiques générales - CRITICAL FOR FRONTEND
+     */
+    public StatsGeneralesDTO getGeneralStatistics() {
+        log.debug("Génération des statistiques générales");
+        return generateGeneralStats();
+    }
 
-            return generateGeneralStats();
-        }
+    // ===============================
+    // DONNÉES POUR GRAPHIQUES - REQUIRED BY FRONTEND
+    // ===============================
 
-        /**
-         * Récupérer les données de stock par catégorie
-         */
-        public List<ChartDataDTO> getStockByCategory() {
-            log.debug("Génération des données de stock par catégorie");
+    /**
+     * Stock par catégorie - REQUIRED
+     */
+    public List<ChartDataDTO> getStockByCategory() {
+        log.debug("Récupération des données de stock par catégorie");
+        return generateStockByCategory();
+    }
 
-            return generateStockByCategory();
-        }
+    /**
+     * Tendance des mouvements - REQUIRED
+     */
+    public List<ChartDataDTO> getMovementsTrend(int days) {
+        log.debug("Récupération de la tendance des mouvements sur {} jours", days);
+        return generateMovementsTrend(days);
+    }
 
-        /**
-         * Récupérer la tendance des mouvements
-         */
-        public List<ChartDataDTO> getMovementsTrend(int days) {
-            log.debug("Génération de la tendance des mouvements sur {} jours", days);
+    /**
+     * Top articles consommés - REQUIRED
+     */
+    public List<ChartDataDTO> getTopConsumedArticles(int days, int limit) {
+        log.debug("Récupération des {} top articles consommés sur {} jours", limit, days);
+        return generateTopConsumedArticles(days, limit);
+    }
 
-            return generateMovementsTrend(days);
-        }
+    /**
+     * Évolution de la valeur du stock - REQUIRED
+     */
+    public List<ChartDataDTO> getStockValueEvolution(int days) {
+        log.debug("Récupération de l'évolution de la valeur du stock sur {} jours", days);
+        return generateStockValueEvolution(days);
+    }
 
-        /**
-         * Récupérer les articles les plus consommés
-         */
-        public List<ChartDataDTO> getTopConsumedArticles(int days, int limit) {
-            log.debug("Génération du top {} articles consommés sur {} jours", limit, days);
+    /**
+     * Statistiques des mouvements d'aujourd'hui - REQUIRED
+     */
+    public Map<String, Object> getTodayMovementStats() {
+        log.debug("Récupération des statistiques des mouvements d'aujourd'hui");
 
-            return generateTopConsumedArticles(days, limit);
-        }
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
 
-        /**
-         * Récupérer toutes les alertes de stock
-         */
-        public List<AlerteStockDTO> getStockAlerts() {
-            log.debug("Génération des alertes de stock");
+        Map<String, Object> stats = new HashMap<>();
 
-            return generateStockAlerts();
-        }
-
-        /**
-         * Récupérer les activités récentes
-         */
-        public List<ActiviteRecenteDTO> getRecentActivities(int limit) {
-            log.debug("Génération des {} dernières activités", limit);
-
-            return generateRecentActivities(limit);
-        }
-
-        // ===============================
-        // STATISTIQUES SPÉCIALISÉES
-        // ===============================
-
-        /**
-         * Récupérer les statistiques des mouvements d'aujourd'hui
-         */
-        public Map<String, Object> getTodayMovementStats() {
-            log.debug("Génération des statistiques des mouvements d'aujourd'hui");
-
-            Map<String, Object> stats = new HashMap<>();
-
-            // Comptage par type de mouvement
-            Long entrees = stockMovementRepository.countTodayMovementsByType(TypeMouvement.ENTREE);
-            Long sorties = stockMovementRepository.countTodayMovementsByType(TypeMouvement.SORTIE);
-            Long total = entrees + sorties;
-
-            // Valeurs financières
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-            LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+        try {
+            Long entreesAujourdhui = stockMovementRepository.countMovementsByTypeAndDateRange(
+                    TypeMouvement.ENTREE, startOfDay, endOfDay);
+            Long sortiesAujourdhui = stockMovementRepository.countMovementsByTypeAndDateRange(
+                    TypeMouvement.SORTIE, startOfDay, endOfDay);
 
             BigDecimal valeurEntrees = stockMovementRepository.getTotalEntryValueBetween(startOfDay, endOfDay);
             BigDecimal valeurSorties = stockMovementRepository.getTotalExitValueBetween(startOfDay, endOfDay);
 
-            stats.put("nombreEntrees", entrees);
-            stats.put("nombreSorties", sorties);
-            stats.put("totalMouvements", total);
-            stats.put("valeurEntrees", valeurEntrees);
-            stats.put("valeurSorties", valeurSorties);
-            stats.put("soldeJour", valeurEntrees.subtract(valeurSorties));
+            stats.put("entreesAujourdhui", entreesAujourdhui != null ? entreesAujourdhui : 0L);
+            stats.put("sortiesAujourdhui", sortiesAujourdhui != null ? sortiesAujourdhui : 0L);
+            stats.put("mouvementsTotaux", (entreesAujourdhui != null ? entreesAujourdhui : 0L) +
+                    (sortiesAujourdhui != null ? sortiesAujourdhui : 0L));
+            stats.put("valeurEntrees", valeurEntrees != null ? valeurEntrees : BigDecimal.ZERO);
+            stats.put("valeurSorties", valeurSorties != null ? valeurSorties : BigDecimal.ZERO);
+            stats.put("timestamp", LocalDateTime.now());
 
-            return stats;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des stats d'aujourd'hui", e);
+            // Valeurs par défaut en cas d'erreur
+            stats.put("entreesAujourdhui", 0L);
+            stats.put("sortiesAujourdhui", 0L);
+            stats.put("mouvementsTotaux", 0L);
+            stats.put("valeurEntrees", BigDecimal.ZERO);
+            stats.put("valeurSorties", BigDecimal.ZERO);
+            stats.put("timestamp", LocalDateTime.now());
         }
 
-        /**
-         * Récupérer les performances des fournisseurs
-         */
-        public List<Map<String, Object>> getSupplierPerformance(int days, int limit) {
-            log.debug("Génération des performances des {} top fournisseurs sur {} jours", limit, days);
+        return stats;
+    }
 
-            LocalDateTime since = LocalDateTime.now().minusDays(days);
-            Pageable pageable = PageRequest.of(0, limit);
+    /**
+     * Performance des fournisseurs - REQUIRED
+     */
+    public List<Map<String, Object>> getSupplierPerformance(int days, int limit) {
+        log.debug("Récupération des performances des fournisseurs sur {} jours, limit {}", days, limit);
 
-            List<Object[]> results = fournisseurRepository.findTopFournisseursByPurchaseValue(since, pageable);
+        LocalDateTime since = LocalDateTime.now().minusDays(days);
+        Pageable pageable = PageRequest.of(0, limit);
 
-            return results.stream().map(result -> {
-                Map<String, Object> performance = new HashMap<>();
-                performance.put("fournisseurId", result[0]);
-                performance.put("fournisseurNom", result[1]);
-                performance.put("valeurAchats", result[2]);
-                performance.put("nombreLivraisons", result.length > 3 ? result[3] : 0);
-                return performance;
-            }).collect(Collectors.toList());
-        }
+        List<Map<String, Object>> performance = new ArrayList<>();
 
-        /**
-         * Récupérer l'évolution des valeurs de stock
-         */
-        public List<ChartDataDTO> getStockValueEvolution(int days) {
-            log.debug("Génération de l'évolution des valeurs de stock sur {} jours", days);
+        try {
+            // Récupérer les top fournisseurs par valeur d'achats
+            List<Object[]> topSuppliers = fournisseurRepository.findTopFournisseursByPurchaseValue(since, pageable);
 
-            List<ChartDataDTO> evolution = new ArrayList<>();
+            for (Object[] supplier : topSuppliers) {
+                Map<String, Object> supplierPerf = new HashMap<>();
+                Fournisseur fournisseur = (Fournisseur) supplier[0];
+                BigDecimal totalAchats = (BigDecimal) supplier[1];
 
-            // Simulation de l'évolution (dans un vrai système, vous stockeriez l'historique)
-            BigDecimal valeurActuelle = stockRepository.getTotalStockValue();
+                supplierPerf.put("id", fournisseur.getId());
+                supplierPerf.put("nomFournisseur", fournisseur.getNom());
+                supplierPerf.put("performance", totalAchats);
+                supplierPerf.put("valeur", totalAchats); // Pour compatibilité avec le frontend
+                supplierPerf.put("ville", fournisseur.getVille());
+                supplierPerf.put("pays", fournisseur.getPays());
 
-            for (int i = days; i >= 0; i--) {
-                LocalDate date = LocalDate.now().minusDays(i);
-                // Simulation d'une variation quotidienne
-                BigDecimal variation = valeurActuelle.multiply(BigDecimal.valueOf(0.01 * Math.random()));
-                BigDecimal valeurJour = valeurActuelle.subtract(variation);
-
-                ChartDataDTO dataPoint = new ChartDataDTO();
-                dataPoint.setLabel(date.toString());
-                dataPoint.setValue(valeurJour);
-                dataPoint.setColor("#3498db");
-
-                evolution.add(dataPoint);
+                performance.add(supplierPerf);
             }
 
-            return evolution;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des performances fournisseurs", e);
+            // Retourner une liste vide en cas d'erreur
         }
 
-        /**
-         * Récupérer les indicateurs clés de performance (KPI)
-         */
-        public Map<String, Object> getKPIs() {
-            log.debug("Génération des indicateurs clés de performance");
+        return performance;
+    }
 
-            Map<String, Object> kpis = new HashMap<>();
+    // ===============================
+    // MÉTHODES PRIVÉES - GÉNÉRATION DONNÉES
+    // ===============================
 
-            // KPI Stock
-            Object stockStats = stockRepository.getGeneralStockStatistics();
-            Object[] stockData = (Object[]) stockStats;
+    private StatsGeneralesDTO generateGeneralStats() {
+        StatsGeneralesDTO stats = new StatsGeneralesDTO();
 
-            kpis.put("tauxRotationStock", calculateStockRotationRate());
-            kpis.put("tauxCouvertureStock", calculateStockCoverageRate());
-            kpis.put("tauxRuptureStock", calculateStockoutRate());
-            kpis.put("valeurMoyenneStock", stockRepository.getTotalStockValue());
-
-            // KPI Mouvement
-            LocalDateTime startMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-            LocalDateTime endMonth = LocalDate.now().atTime(23, 59, 59);
-
-            BigDecimal valeurEntreesMois = stockMovementRepository.getTotalEntryValueBetween(startMonth, endMonth);
-            BigDecimal valeurSortiesMois = stockMovementRepository.getTotalExitValueBetween(startMonth, endMonth);
-
-            kpis.put("valeurEntreesMois", valeurEntreesMois);
-            kpis.put("valeurSortiesMois", valeurSortiesMois);
-            kpis.put("soldeMois", valeurEntreesMois.subtract(valeurSortiesMois));
-
-            return kpis;
-        }
-
-        // ===============================
-        // MÉTHODES PRIVÉES - GÉNÉRATION DONNÉES
-        // ===============================
-
-        private StatsGeneralesDTO generateGeneralStats() {
-            StatsGeneralesDTO stats = new StatsGeneralesDTO();
-
+        try {
             // Statistiques des articles
             Long totalArticles = articleRepository.count();
             Long articlesActifs = articleRepository.countByActif(true);
 
             // Statistiques du stock
             BigDecimal valeurTotaleStock = stockRepository.getTotalStockValue();
-            Object stockStatsObj = stockRepository.getDetailedStockStatusCount();
-            Object[] stockStats = (Object[]) stockStatsObj;
+            if (valeurTotaleStock == null) valeurTotaleStock = BigDecimal.ZERO;
 
-            Integer articlesCritiques = ((Number) stockStats[1]).intValue(); // stocksCritiques
-            Integer articlesFaibles = ((Number) stockStats[2]).intValue();   // stocksFaibles
+            // Récupérer les alertes de stock
+            Object stockStatsObj = stockRepository.getDetailedStockStatusCount();
+            Integer articlesCritiques = 0;
+            Integer articlesFaibles = 0;
+
+            if (stockStatsObj != null && stockStatsObj instanceof Object[]) {
+                Object[] stockStats = (Object[]) stockStatsObj;
+                if (stockStats.length >= 3) {
+                    articlesCritiques = stockStats[1] != null ? ((Number) stockStats[1]).intValue() : 0;
+                    articlesFaibles = stockStats[2] != null ? ((Number) stockStats[2]).intValue() : 0;
+                }
+            }
 
             // Statistiques des mouvements d'aujourd'hui
-            Long entreesAujourdhui = stockMovementRepository.countTodayMovementsByType(TypeMouvement.ENTREE);
-            Long sortiesAujourdhui = stockMovementRepository.countTodayMovementsByType(TypeMouvement.SORTIE);
-            Long mouvementsAujourdhui = entreesAujourdhui + sortiesAujourdhui;
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+
+            Long entreesAujourdhui = stockMovementRepository.countMovementsByTypeAndDateRange(
+                    TypeMouvement.ENTREE, startOfDay, endOfDay);
+            Long sortiesAujourdhui = stockMovementRepository.countMovementsByTypeAndDateRange(
+                    TypeMouvement.SORTIE, startOfDay, endOfDay);
 
             // Statistiques des fournisseurs
             Long totalFournisseurs = fournisseurRepository.count();
             Long fournisseursActifs = fournisseurRepository.countByActif(true);
 
-            stats.setTotalArticles(totalArticles.intValue());
-            stats.setTotalArticlesActifs(articlesActifs.intValue());
+            // Remplir le DTO
+            stats.setTotalArticles(totalArticles != null ? totalArticles.intValue() : 0);
+            stats.setTotalArticlesActifs(articlesActifs != null ? articlesActifs.intValue() : 0);
             stats.setValeurTotaleStock(valeurTotaleStock);
-            stats.setMouvementsAujourdhui(mouvementsAujourdhui.intValue());
-            stats.setEntreesAujourdhui(entreesAujourdhui.intValue());
-            stats.setSortiesAujourdhui(sortiesAujourdhui.intValue());
+            stats.setMouvementsAujourdhui((entreesAujourdhui != null ? entreesAujourdhui.intValue() : 0) +
+                    (sortiesAujourdhui != null ? sortiesAujourdhui.intValue() : 0));
+            stats.setEntreesAujourdhui(entreesAujourdhui != null ? entreesAujourdhui.intValue() : 0);
+            stats.setSortiesAujourdhui(sortiesAujourdhui != null ? sortiesAujourdhui.intValue() : 0);
             stats.setArticlesCritiques(articlesCritiques);
             stats.setArticlesFaibles(articlesFaibles);
-            stats.setTotalFournisseurs(totalFournisseurs.intValue());
-            stats.setFournisseursActifs(fournisseursActifs.intValue());
+            stats.setTotalFournisseurs(totalFournisseurs != null ? totalFournisseurs.intValue() : 0);
+            stats.setFournisseursActifs(fournisseursActifs != null ? fournisseursActifs.intValue() : 0);
 
-            return stats;
+            log.debug("Stats générées: {} articles, {} MAD valeur stock, {} critiques",
+                    stats.getTotalArticles(), stats.getValeurTotaleStock(), stats.getArticlesCritiques());
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération des statistiques générales", e);
+            // Valeurs par défaut en cas d'erreur
+            stats.setTotalArticles(0);
+            stats.setTotalArticlesActifs(0);
+            stats.setValeurTotaleStock(BigDecimal.ZERO);
+            stats.setMouvementsAujourdhui(0);
+            stats.setEntreesAujourdhui(0);
+            stats.setSortiesAujourdhui(0);
+            stats.setArticlesCritiques(0);
+            stats.setArticlesFaibles(0);
+            stats.setTotalFournisseurs(0);
+            stats.setFournisseursActifs(0);
         }
 
-        private List<ChartDataDTO> generateStockByCategory() {
+        return stats;
+    }
+
+    private List<ChartDataDTO> generateStockByCategory() {
+        try {
             List<Object[]> categoryStats = stockRepository.getStockValueByCategory();
 
             return categoryStats.stream().map(stat -> {
                 String categorie = (String) stat[0];
                 BigDecimal valeur = (BigDecimal) stat[1];
                 Long count = (Long) stat[2];
-                Long quantite = (Long) stat[3];
 
                 ChartDataDTO chartData = new ChartDataDTO();
-                chartData.setLabel(categorie != null ? categorie : "Sans catégorie");
-                chartData.setValue(valeur);
-                chartData.setColor(generateRandomColor());
+                chartData.setLabel(categorie != null ? categorie : "Non classé");
+                chartData.setValue(count != null ? count : 0L);
 
+                // Métadonnées supplémentaires
                 Map<String, Object> metadata = new HashMap<>();
-                metadata.put("nombreArticles", count);
-                metadata.put("quantiteTotale", quantite);
+                metadata.put("valeur", valeur != null ? valeur : BigDecimal.ZERO);
+                metadata.put("nombreArticles", count != null ? count : 0L);
                 chartData.setMetadata(metadata);
 
                 return chartData;
             }).collect(Collectors.toList());
-        }
 
-        private List<ChartDataDTO> generateMovementsTrend(int days) {
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération du stock par catégorie", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private List<ChartDataDTO> generateMovementsTrend(int days) {
+        try {
             LocalDateTime endDate = LocalDateTime.now();
             LocalDateTime startDate = endDate.minusDays(days);
 
-            List<Object[]> trendData = stockMovementRepository.getMovementTrend(startDate, endDate);
+            List<Object[]> movementTrend = stockMovementRepository.getMovementTrend(startDate, endDate);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
 
-            // Regroupement par date
-            Map<LocalDate, Map<String, Long>> dailyData = new LinkedHashMap<>();
+            // Créer une map pour grouper par date
+            Map<LocalDate, Integer> dailyMovements = new HashMap<>();
 
-            for (Object[] data : trendData) {
-                LocalDate date = ((java.sql.Date) data[0]).toLocalDate();
-                String type = data[1].toString();
-                Long count = ((Number) data[2]).longValue();
-
-                dailyData.computeIfAbsent(date, k -> new HashMap<>()).put(type, count);
+            for (Object[] trend : movementTrend) {
+                LocalDate date = (LocalDate) trend[0];
+                Long count = ((Number) trend[2]).longValue();
+                dailyMovements.merge(date, count.intValue(), Integer::sum);
             }
 
-            List<ChartDataDTO> chartData = new ArrayList<>();
+            // Convertir en ChartDataDTO
+            return dailyMovements.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(entry -> {
+                        ChartDataDTO chartData = new ChartDataDTO();
+                        chartData.setLabel(entry.getKey().format(formatter));
+                        chartData.setValue(entry.getValue());
+                        return chartData;
+                    })
+                    .collect(Collectors.toList());
 
-            for (Map.Entry<LocalDate, Map<String, Long>> entry : dailyData.entrySet()) {
-                LocalDate date = entry.getKey();
-                Map<String, Long> movements = entry.getValue();
-
-                Long entrees = movements.getOrDefault("ENTREE", 0L);
-                Long sorties = movements.getOrDefault("SORTIE", 0L);
-
-                // Point pour les entrées
-                ChartDataDTO entreeData = new ChartDataDTO();
-                entreeData.setLabel(date.toString());
-                entreeData.setValue(entrees);
-                entreeData.setColor("#2ecc71"); // Vert pour entrées
-
-                Map<String, Object> entreeMetadata = new HashMap<>();
-                entreeMetadata.put("type", "ENTREE");
-                entreeMetadata.put("date", date);
-                entreeData.setMetadata(entreeMetadata);
-
-                chartData.add(entreeData);
-
-                // Point pour les sorties
-                ChartDataDTO sortieData = new ChartDataDTO();
-                sortieData.setLabel(date.toString());
-                sortieData.setValue(sorties);
-                sortieData.setColor("#e74c3c"); // Rouge pour sorties
-
-                Map<String, Object> sortieMetadata = new HashMap<>();
-                sortieMetadata.put("type", "SORTIE");
-                sortieMetadata.put("date", date);
-                sortieData.setMetadata(sortieMetadata);
-
-                chartData.add(sortieData);
-            }
-
-            return chartData;
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération de la tendance des mouvements", e);
+            return new ArrayList<>();
         }
+    }
 
-        private List<ChartDataDTO> generateTopConsumedArticles(int days, int limit) {
-            LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+    private List<ChartDataDTO> generateTopConsumedArticles(int days, int limit) {
+        try {
             LocalDateTime endDate = LocalDateTime.now();
+            LocalDateTime startDate = endDate.minusDays(days);
             Pageable pageable = PageRequest.of(0, limit);
 
-            List<Object[]> topArticles = stockMovementRepository.getTopConsumedArticles(startDate, endDate, pageable);
+            List<Object[]> topConsumed = stockMovementRepository.getTopConsumedArticles(startDate, endDate, pageable);
 
-            return topArticles.stream().map(data -> {
-                Article article = (Article) data[0];
-                Long quantiteConsommee = ((Number) data[1]).longValue();
+            return topConsumed.stream().map(consumed -> {
+                Article article = (Article) consumed[0];
+                Long totalQuantite = ((Number) consumed[1]).longValue();
 
                 ChartDataDTO chartData = new ChartDataDTO();
-                chartData.setValue(quantiteConsommee);
-                chartData.setColor(generateRandomColor());
+                chartData.setValue(totalQuantite);
 
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("articleId", article.getId());
-                metadata.put("articleNom", article.getNom());
+                metadata.put("articleCode", article.getNom());
                 metadata.put("unite", article.getUnite());
                 chartData.setMetadata(metadata);
 
                 return chartData;
             }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération des top articles consommés", e);
+            return new ArrayList<>();
         }
+    }
 
-        private List<AlerteStockDTO> generateStockAlerts() {
-            List<AlerteStockDTO> alertes = new ArrayList<>();
+    private List<ChartDataDTO> generateStockValueEvolution(int days) {
+        try {
+            List<ChartDataDTO> evolution = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
 
+            // Simuler l'évolution sur les derniers jours
+            // Dans un cas réel, vous devriez avoir un historique des valeurs de stock
+            BigDecimal currentValue = stockRepository.getTotalStockValue();
+            if (currentValue == null) currentValue = BigDecimal.ZERO;
+
+            LocalDate today = LocalDate.now();
+            for (int i = days - 1; i >= 0; i--) {
+                LocalDate date = today.minusDays(i);
+
+                // Simulation de variation (à remplacer par des données réelles)
+                double variation = 1.0 + (Math.random() - 0.5) * 0.1; // ±5% de variation
+                BigDecimal dailyValue = currentValue.multiply(BigDecimal.valueOf(variation));
+
+                ChartDataDTO chartData = new ChartDataDTO();
+                chartData.setLabel(date.format(formatter));
+                chartData.setValue(dailyValue);
+
+                evolution.add(chartData);
+            }
+
+            return evolution;
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération de l'évolution de la valeur du stock", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private List<AlerteStockDTO> generateStockAlerts() {
+        List<AlerteStockDTO> alertes = new ArrayList<>();
+
+        try {
             // Alertes de stock critique
             List<Stock> stocksCritiques = stockRepository.findCriticalStocks();
             for (Stock stock : stocksCritiques) {
@@ -415,116 +428,45 @@
             List<Stock> stocksExcessifs = stockRepository.findExcessiveStocks();
             for (Stock stock : stocksExcessifs) {
                 Article article = stock.getArticle();
-                AlerteStockDTO alerte = new AlerteStockDTO();
-                alerte.setArticleId(article.getId());
-                alerte.setArticleCode(article.getNom());
-                alerte.setTypeAlerte("EXCESSIF");
-                alerte.setQuantiteActuelle(stock.getQuantiteActuelle());
-                alerte.setStockMax(article.getStockMax());
-                alerte.setDateAlerte(LocalDate.now());
-                alerte.setMessage("Stock excessif : " + stock.getQuantiteActuelle() + " unités (max: " + article.getStockMax() + ")");
-                alerte.setPriorite("BASSE");
+                AlerteStockDTO alerte = new AlerteStockDTO(
+                        article.getId(),
+                        article.getNom(),
+                        "EXCESSIF",
+                        stock.getQuantiteActuelle(),
+                        article.getStockMax()
+                );
                 alertes.add(alerte);
             }
 
-            // Trier les alertes par priorité
-            alertes.sort((a1, a2) -> {
-                Map<String, Integer> priorityOrder = Map.of("HAUTE", 1, "MOYENNE", 2, "BASSE", 3);
-                return priorityOrder.get(a1.getPriorite()).compareTo(priorityOrder.get(a2.getPriorite()));
-            });
-
-            return alertes;
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération des alertes de stock", e);
         }
 
-        private List<ActiviteRecenteDTO> generateRecentActivities(int limit) {
-            List<ActiviteRecenteDTO> activites = new ArrayList<>();
+        return alertes;
+    }
 
-            // Récupération des mouvements récents
+    private List<ActiviteRecenteDTO> generateRecentActivities(int limit) {
+        try {
             Pageable pageable = PageRequest.of(0, limit);
-            List<StockMovement> recentMovements = stockMovementRepository
-                    .findAllByOrderByDateMouvementDesc(pageable)
-                    .getContent();
+            List<StockMovement> recentMovements = stockMovementRepository.findAllByOrderByDateMouvementDesc(pageable).getContent();
 
-            for (StockMovement movement : recentMovements) {
-                String type = movement.getTypeMouvement().isEntree() ? "ENTREE" : "SORTIE";
-                String description = String.format("%s - %s: %d %s",
-                        movement.getArticle().getNom(),
+            return recentMovements.stream().map(movement -> {
+                ActiviteRecenteDTO activite = new ActiviteRecenteDTO();
+                activite.setId(movement.getId());
+                activite.setType(movement.getTypeMouvement().name());
+                activite.setDescription(String.format("%s - %s (%d %s)",
+                        movement.getTypeMouvement().name(),
                         movement.getQuantite(),
-                        movement.getArticle().getUnite() != null ? movement.getArticle().getUnite() : "unités"
-                );
+                        movement.getArticle().getUnite()));
+                activite.setDateActivite(movement.getDateMouvement());
+                activite.setUtilisateur(movement.getUtilisateur());
 
-                ActiviteRecenteDTO activite = new ActiviteRecenteDTO(
-                        type,
-                        description,
-                        movement.getUtilisateur()
-                );
-                activite.setDate(movement.getDateMouvement().toLocalDate());
+                return activite;
+            }).collect(Collectors.toList());
 
-                activites.add(activite);
-            }
-
-            return activites;
-        }
-
-        // ===============================
-        // MÉTHODES PRIVÉES - CALCULS KPI
-        // ===============================
-
-        private Double calculateStockRotationRate() {
-            // Taux de rotation = Coût des marchandises vendues / Stock moyen
-            // Simulation simplifiée
-            LocalDateTime startMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-            LocalDateTime endMonth = LocalDate.now().atTime(23, 59, 59);
-
-            BigDecimal valeurSorties = stockMovementRepository.getTotalExitValueBetween(startMonth, endMonth);
-            BigDecimal valeurStock = stockRepository.getTotalStockValue();
-
-            if (valeurStock.compareTo(BigDecimal.ZERO) == 0) {
-                return 0.0;
-            }
-
-            return valeurSorties.divide(valeurStock, 2, java.math.RoundingMode.HALF_UP).doubleValue();
-        }
-
-        private Double calculateStockCoverageRate() {
-            // Taux de couverture = Stock actuel / Consommation moyenne quotidienne
-            // Simulation simplifiée sur 30 jours
-            LocalDateTime start30Days = LocalDateTime.now().minusDays(30);
-            LocalDateTime now = LocalDateTime.now();
-
-            BigDecimal valeurSorties30j = stockMovementRepository.getTotalExitValueBetween(start30Days, now);
-            BigDecimal consommationMoyenneJour = valeurSorties30j.divide(BigDecimal.valueOf(30), 2, java.math.RoundingMode.HALF_UP);
-            BigDecimal valeurStock = stockRepository.getTotalStockValue();
-
-            if (consommationMoyenneJour.compareTo(BigDecimal.ZERO) == 0) {
-                return 999.0; // Stock très élevé par rapport à la consommation
-            }
-
-            return valeurStock.divide(consommationMoyenneJour, 2, java.math.RoundingMode.HALF_UP).doubleValue();
-        }
-
-        private Double calculateStockoutRate() {
-            // Taux de rupture = Nombre d'articles en rupture / Total articles
-            Long totalArticles = articleRepository.countByActif(true);
-            Long articlesEnRupture = (long) stockRepository.findEmptyStocks().size();
-
-            if (totalArticles == 0) {
-                return 0.0;
-            }
-
-            return (articlesEnRupture.doubleValue() / totalArticles.doubleValue()) * 100;
-        }
-
-        // ===============================
-        // MÉTHODES UTILITAIRES
-        // ===============================
-
-        private String generateRandomColor() {
-            String[] colors = {
-                    "#3498db", "#e74c3c", "#2ecc71", "#f39c12", "#9b59b6",
-                    "#1abc9c", "#34495e", "#e67e22", "#95a5a6", "#16a085"
-            };
-            Random random = new Random();
-            return colors[random.nextInt(colors.length)];
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération des activités récentes", e);
+            return new ArrayList<>();
         }
     }
+}
